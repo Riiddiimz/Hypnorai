@@ -21,7 +21,7 @@ canvas{width:100%;height:100%;display:block}
 .side h2{font-size:16px;margin:0 0 3px}.side .sub{font-size:12px;color:var(--muted);margin:0 0 18px}.group{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}.group:first-of-type{border-top:0;padding-top:0;margin-top:0}
 .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0 7px}.row label{font-size:12px;color:#cdd5e8}.value{font-variant-numeric:tabular-nums;color:var(--accent);font-size:12px;font-weight:800}
 input[type=range]{width:100%;accent-color:#6cf6ff}select{width:100%;background:#0a0f1d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px}
-.check{display:flex;align-items:center;gap:9px;font-size:12px;color:#cdd5e8;margin:10px 0}.check input{accent-color:#6cf6ff}
+.check{display:flex;align-items:center;gap:9px;font-size:12px;color:#cdd5e8;margin:10px 0}.check input{accent-color:#6cf6ff}.canvasWrap{cursor:crosshair}.canvasWrap.dragging{cursor:grabbing}
 .audioBtn{width:100%;margin-top:12px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.03)}.stat b{display:block;font-size:15px}.stat span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 @media(max-width:980px){.app{grid-template-columns:1fr;padding:10px}.side{max-height:none}.canvasWrap{height:70vh;min-height:480px}.topbar{align-items:flex-start}.brand p{display:none}}
@@ -54,7 +54,7 @@ input[type=range]{width:100%;accent-color:#6cf6ff}select{width:100%;background:#
     <div class="row"><label>Gravité</label><span class="value" id="gravityVal"></span></div><input id="gravity" type="range" min="0" max="20" step=".1" value="9.8">
     <div class="row"><label>Restitution</label><span class="value" id="bounceVal"></span></div><input id="bounce" type="range" min=".5" max="1.1" step=".01" value=".88">
     <div class="row"><label>Gel / nouvelle boule</label><span class="value" id="freezeVal"></span></div><input id="freeze" type="range" min="1" max="10" step=".1" value="3">
-    <div class="row"><label>Rotation</label><span class="value" id="rotationVal"></span></div><input id="rotation" type="range" min="-120" max="120" step="1" value="18">
+    <div class="row"><label>Vitesse de rotation</label><span class="value" id="rotationVal"></span></div><input id="rotation" type="range" min="-120" max="120" step="1" value="18"><label class="check"><input id="rotationEnabled" type="checkbox" checked> Rotation automatique</label>
     <div class="row"><label>Ouverture</label><span class="value" id="gapVal"></span></div><input id="gap" type="range" min="10" max="90" step="1" value="32">
     <div class="row"><label>Vitesse initiale</label><span class="value" id="speedVal"></span></div><input id="speed" type="range" min="1" max="10" step=".1" value="5.2">
   </div>
@@ -89,7 +89,7 @@ const wrap = document.getElementById("canvasWrap");
 
 const $ = id => document.getElementById(id);
 const ui = {
-  gravity:$("gravity"), bounce:$("bounce"), freeze:$("freeze"), rotation:$("rotation"),
+  gravity:$("gravity"), bounce:$("bounce"), freeze:$("freeze"), rotation:$("rotation"), rotationEnabled:$("rotationEnabled"),
   gap:$("gap"), speed:$("speed"), melody:$("melody"), instrument:$("instrument"),
   theme:$("theme"), showTrails:$("showTrails"), showGrid:$("showGrid"),
   play:$("play"), reset:$("reset"), fullscreen:$("fullscreen"),
@@ -211,7 +211,7 @@ class Ball {
 class Arena {
   constructor(){this.rotation=0;this.cx=0;this.cy=0;this.radius=0}
   resize(w,h){this.cx=w/2;this.cy=h/2;this.radius=Math.min(w,h)*.38}
-  update(dt){this.rotation+=game.rotation*Math.PI/180*dt}
+  update(dt){if(game.rotationEnabled&&!game.draggingGap)this.rotation+=game.rotation*Math.PI/180*dt}
   gapContains(angle){
     const local=normAngle(angle-this.rotation);
     return Math.abs(local)<=game.gap*Math.PI/360;
@@ -263,7 +263,7 @@ const arena=new Arena();
 
 class Game {
   constructor(){
-    this.running=false;this.paused=false;this.gravity=9.8;this.bounce=.88;this.freezeTime=3;this.rotation=18;this.gap=32;this.speed=5.2;
+    this.running=false;this.paused=false;this.gravity=9.8;this.bounce=.88;this.freezeTime=3;this.rotation=18;this.gap=32;this.speed=5.2;this.rotationEnabled=true;this.draggingGap=false;
     this.theme=THEMES.cyber;this.showTrails=true;this.showGrid=true;this.frozen=[];this.active=null;this.timer=this.freezeTime;
     this.impactCount=0;this.noteCount=0;this.last=performance.now();this.escapeTimer=0;this.won=false;this.spawnAngle=-Math.PI/4;
   }
@@ -376,14 +376,14 @@ bindRange("speed",v=>v.toFixed(1),"speed");
 
 ui.theme.addEventListener("change",()=>{game.theme=THEMES[ui.theme.value]});
 ui.showTrails.addEventListener("change",()=>game.showTrails=ui.showTrails.checked);
-ui.showGrid.addEventListener("change",()=>game.showGrid=ui.showGrid.checked);
+ui.showGrid.addEventListener("change",()=>game.showGrid=ui.showGrid.checked);\nui.rotationEnabled.addEventListener("change",()=>{game.rotationEnabled=ui.rotationEnabled.checked});
 ui.freeze.addEventListener("change",()=>{game.freezeTime=Number(ui.freeze.value)});
 ui.play.addEventListener("click",async()=>{if(!audio.enabled)await audio.enable();game.running?game.pause():game.start()});
 ui.reset.addEventListener("click",()=>game.reset());
 ui.enableAudio.addEventListener("click",()=>audio.toggle());
 ui.audioTop.addEventListener("click",()=>audio.toggle());
 ui.fullscreen.addEventListener("click",async()=>{if(!document.fullscreenElement)await wrap.requestFullscreen?.();else await document.exitFullscreen?.()});
-wrap.addEventListener("pointerdown",()=>{if(!audio.enabled)audio.enable()},{once:false});
+wrap.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;if(!audio.enabled)audio.enable();const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx);game.draggingGap=true;wrap.classList.add("dragging");try{wrap.setPointerCapture(e.pointerId)}catch{}});\nwrap.addEventListener("pointermove",e=>{if(!game.draggingGap)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx)});\nconst stopGapDrag=e=>{if(!game.draggingGap)return;game.draggingGap=false;wrap.classList.remove("dragging");try{wrap.releasePointerCapture(e.pointerId)}catch{}};\nwrap.addEventListener("pointerup",stopGapDrag);\nwrap.addEventListener("pointercancel",stopGapDrag);
 
 window.addEventListener("resize",()=>game.resize());
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&game.running&&!game.paused)game.pause()});

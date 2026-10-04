@@ -1,142 +1,153 @@
 import { useEffect, useRef, useState } from 'react'
+import './styles.css'
 
-type Theme = { name:string; colors:string[]; background:string }
-type Mode = 'bounce'|'orbit'|'rings'|'growth'
+type Ball = { x:number; y:number; vx:number; vy:number; r:number; frozen:boolean }
+type Particle = { x:number; y:number; vx:number; vy:number; life:number; color:string; size:number }
 
-const THEMES:Theme[]=[
-  {name:'Neon',colors:['#7c3cff','#00e5ff','#ff3cac'],background:'#07070a'},
-  {name:'Aurora',colors:['#00f5a0','#00d9f5','#8b5cf6'],background:'#06100f'},
-  {name:'Sunset',colors:['#ff4d6d','#ff9f1c','#ffe66d'],background:'#120907'},
-]
-const MODES:{id:Mode;name:string;desc:string;icon:string}[]=[
-  {id:'bounce',name:'Infinite Bounce',desc:'orb · ring · collisions',icon:'◉'},
-  {id:'orbit',name:'Orbit Loop',desc:'gravity · orbit · trails',icon:'◎'},
-  {id:'rings',name:'Ring Cascade',desc:'rings · pulses · rhythm',icon:'◌'},
-  {id:'growth',name:'Fractal Growth',desc:'branches · bloom · recursion',icon:'✣'},
-]
+const NOTES=[261.63,293.66,329.63,392,440,523.25,587.33,659.25,783.99,659.25,587.33,523.25,440,392,329.63,293.66]
 
-const seededRandom=(seed:number)=>{
- let t=seed>>>0
- return()=>{t+=0x6D2B79F5;let r=Math.imul(t^(t>>>15),1|t);r^=r+Math.imul(r^(r>>>7),61|r);return((r^(r>>>14))>>>0)/4294967296}
-}
-
-function App(){
+export default function App(){
  const canvasRef=useRef<HTMLCanvasElement>(null)
- const [mode,setMode]=useState<Mode>('bounce')
- const [themeIndex,setThemeIndex]=useState(0)
- const [speed,setSpeed]=useState(1)
- const [intensity,setIntensity]=useState(.7)
- const [trail,setTrail]=useState(true)
- const [particles,setParticles]=useState(true)
  const [running,setRunning]=useState(true)
  const [seed,setSeed]=useState(1)
  const [recording,setRecording]=useState(false)
- const mediaRef=useRef<MediaRecorder|null>(null)
- const chunksRef=useRef<Blob[]>([])
- const theme=THEMES[themeIndex]
+ const recorder=useRef<MediaRecorder|null>(null)
+ const chunks=useRef<Blob[]>([])
+ const audio=useRef<AudioContext|null>(null)
 
  useEffect(()=>{
   const canvas=canvasRef.current;if(!canvas)return
   const ctx=canvas.getContext('2d');if(!ctx)return
-  let raf=0,last=performance.now(),dpr=1
-  const resize=()=>{dpr=Math.min(devicePixelRatio||1,2);const r=canvas.getBoundingClientRect();canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  let raf=0,last=performance.now(),w=1,h=1,timer=5,opening=-Math.PI/2,note=0,ended=false
+  const frozen:Ball[]=[]
+  const particles:Particle[]=[]
+  const trail:{x:number;y:number}[]=[]
+  const R=()=>Math.min(w,h)*.34
+  const resize=()=>{const d=Math.min(devicePixelRatio||1,2),q=canvas.getBoundingClientRect();w=q.width;h=q.height;canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0)}
   resize();addEventListener('resize',resize)
-  const rng=seededRandom(seed*9176+themeIndex*101+mode.length*37),random=()=>rng()
-  const history:{x:number;y:number}[]=[]
-  const sparks:{x:number;y:number;vx:number;vy:number;life:number;color:string}[]=[]
-  const rings=Array.from({length:7},(_,i)=>({r:.11+i*.065,phase:random()*6.28}))
-  let time=0
-  let b={x:.5,y:.5,vx:(.45+random()*.2)*(seed%2?1:-1),vy:-.7-random()*.15,r:15+random()*4,h:seed*47}
-  const reset=()=>{history.length=0;sparks.length=0;time=0}
-  const burst=(x:number,y:number,color:string,count=18)=>{if(!particles)return;for(let i=0;i<count;i++){const a=random()*Math.PI*2,v=.6+random()*2.8;sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,color})}}
-  const draw=(now:number)=>{
-   const dt=Math.min((now-last)/16.666,2);last=now;time+=dt
-   const r=canvas.getBoundingClientRect(),w=r.width,h=r.height,cx=w/2,cy=h/2
-   ctx.fillStyle=theme.background;ctx.fillRect(0,0,w,h)
-   const bg=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.min(w,h)*.7);bg.addColorStop(0,theme.colors[0]+'12');bg.addColorStop(1,'#0000');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h)
-   const base=Math.min(w,h)*.34
 
-   if(mode==='bounce'||mode==='orbit'){
-    ctx.save();ctx.translate(cx,cy)
-    ctx.rotate(Math.sin(now*.0003)*.08)
-    ctx.strokeStyle=theme.colors[1]+'70';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,base,0,Math.PI*2);ctx.stroke()
-    ctx.strokeStyle=theme.colors[0]+'20';ctx.lineWidth=14;ctx.beginPath();ctx.arc(0,0,base+11,.2,Math.PI*1.65);ctx.stroke();ctx.restore()
-   }
-   if(mode==='rings'){
-    rings.forEach((q,i)=>{const rr=base*(q.r/.5)+(Math.sin(time*.025+i)*3);ctx.beginPath();ctx.arc(cx,cy,rr,q.phase+time*.008,q.phase+Math.PI*1.55+time*.008);ctx.strokeStyle=theme.colors[i%3]+(i===0?'aa':'35');ctx.lineWidth=i===0?2:1;ctx.stroke()})
-   }
-   if(mode==='growth'){
-    ctx.save();ctx.translate(cx,cy);ctx.globalAlpha=.8
-    for(let arm=0;arm<10;arm++){ctx.rotate(Math.PI*2/10);ctx.beginPath();ctx.moveTo(0,0);for(let s=1;s<12;s++){const rr=s*base/13;const wob=Math.sin(time*.018+s*.8)*intensity*5;ctx.lineTo(Math.cos(s*.42)*rr+wob,Math.sin(s*.42)*rr)}ctx.strokeStyle=theme.colors[arm%3]+'55';ctx.lineWidth=1.2;ctx.stroke()}ctx.restore()
-   }
-
-   if(running){
-    if(mode==='bounce'){
-     b.vy+=.025*intensity*dt*speed;b.x+=b.vx*.00155*dt*speed;b.y+=b.vy*.00155*dt*speed
-     const dx=(b.x-.5)*w,dy=(b.y-.5)*h,d=Math.hypot(dx,dy),max=base-b.r-2
-     if(d>max){const nx=dx/d,ny=dy/d;b.x=.5+nx*max/w;b.y=.5+ny*max/h;const dot=b.vx*nx+b.vy*ny;b.vx-=2*dot*nx;b.vy-=2*dot*ny;b.r=Math.min(b.r+.16*intensity,38);b.h+=63;burst(cx+nx*max,cy+ny*max,theme.colors[Math.floor(Math.abs(b.h/63))%3],12)}
-     history.push({x:cx+dx,y:cy+dy})
-    } else if(mode==='orbit'){
-     const a=time*.012*speed,rad=base*.62
-     const x=Math.cos(a)*rad,y=Math.sin(a*1.73)*rad*.72
-     b.x=.5+x/w;b.y=.5+y/h;history.push({x:cx+x,y:cy+y})
-     if(Math.floor(time)%85===0)burst(cx+x,cy+y,theme.colors[Math.floor(time/85)%3],10)
-    } else if(mode==='rings'){
-     if(Math.floor(time)%18===0){const a=(time*.045)%6.28;burst(cx+Math.cos(a)*base*.55,cy+Math.sin(a)*base*.55,theme.colors[Math.floor(time/18)%3],6)}
-    }
-    if(history.length>110)history.shift()
-   }
-   if(trail&&history.length>1){for(let i=1;i<history.length;i++){const p=history[i],a=i/history.length;ctx.strokeStyle=theme.colors[i%3]+Math.floor(a*100).toString(16).padStart(2,'0');ctx.lineWidth=1+a*5;ctx.beginPath();ctx.moveTo(history[i-1].x,history[i-1].y);ctx.lineTo(p.x,p.y);ctx.stroke()}}
-   for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=.018*dt;s.life-=.022*dt;if(s.life<=0)sparks.splice(i,1);else{ctx.globalAlpha=s.life;ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(s.x,s.y,2*s.life,0,Math.PI*2);ctx.fill()}}ctx.globalAlpha=1
-
-   if(mode==='bounce'||mode==='orbit'){
-    const dx=(b.x-.5)*w,dy=(b.y-.5)*h,bx=cx+dx,by=cy+dy,color=theme.colors[Math.floor(Math.abs(b.h/63))%3]
-    const rr=mode==='orbit'?13:b.r;ctx.save();ctx.shadowBlur=38;ctx.shadowColor=color;ctx.fillStyle=color;ctx.beginPath();ctx.arc(bx,by,rr,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;const g=ctx.createRadialGradient(bx-rr*.3,by-rr*.35,1,bx,by,rr);g.addColorStop(0,'#fff');g.addColorStop(.18,color);g.addColorStop(1,color+'22');ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,rr,0,Math.PI*2);ctx.fill();ctx.restore()
-   }
-   if(mode==='rings'){
-    const pulse=1+Math.sin(time*.07*speed)*.08;ctx.save();ctx.shadowBlur=28;ctx.shadowColor=theme.colors[0];ctx.strokeStyle=theme.colors[0];ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,base*.18*pulse,0,Math.PI*2);ctx.stroke();ctx.restore()
-   }
-   if(mode==='growth'){ctx.save();ctx.shadowBlur=24;ctx.shadowColor=theme.colors[1];ctx.fillStyle=theme.colors[1];ctx.beginPath();ctx.arc(cx,cy,5+Math.sin(time*.08)*2,0,Math.PI*2);ctx.fill();ctx.restore()}
-   raf=requestAnimationFrame(draw)
+  const active:Ball={x:0,y:0,vx:0,vy:0,r:14,frozen:false}
+  const spawn=()=>{
+   active.x=w/2;active.y=h/2
+   const a=-.93,v=.0058
+   active.vx=Math.cos(a)*v;active.vy=Math.sin(a)*v
+   active.r=Math.min(w,h)*.026
+   trail.length=0;timer=5
   }
-  raf=requestAnimationFrame(draw)
-  return()=>{cancelAnimationFrame(raf);removeEventListener('resize',resize)}
- },[theme,themeIndex,speed,intensity,trail,particles,running,seed,mode])
+  const audioOn=()=>{
+   if(!audio.current)audio.current=new AudioContext()
+   if(audio.current.state==='suspended')void audio.current.resume()
+  }
+  const playNote=()=>{
+   const a=audio.current;if(!a)return
+   const o=a.createOscillator(),g=a.createGain(),f=a.createBiquadFilter(),n=a.currentTime
+   o.type='triangle';o.frequency.setValueAtTime(NOTES[note++%NOTES.length],n)
+   f.type='lowpass';f.frequency.value=4200;f.Q.value=.7
+   g.gain.setValueAtTime(.0001,n)
+   g.gain.exponentialRampToValueAtTime(.1,n+.012)
+   g.gain.exponentialRampToValueAtTime(.045,n+.075)
+   g.gain.exponentialRampToValueAtTime(.0001,n+.34)
+   o.connect(f);f.connect(g);g.connect(a.destination);o.start(n);o.stop(n+.36)
+  }
+  const burst=(x:number,y:number,color:string,count=18)=>{
+   for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,v=.7+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,color,size:1+Math.random()*3})}
+  }
+  const angleDiff=(a:number,b:number)=>{let d=(a-b+Math.PI)%(Math.PI*2);if(d<0)d+=Math.PI*2;return d-Math.PI}
+  const openingHit=(a:number)=>Math.abs(angleDiff(a,opening))<Math.PI*.15
 
- const generate=()=>{setSeed(s=>s+1);setRunning(true)}
+  const freeze=()=>{
+   frozen.push({x:active.x,y:active.y,vx:0,vy:0,r:active.r,frozen:true})
+   burst(active.x,active.y,'#aeeeff',30);playNote();spawn()
+  }
+
+  const collideFrozen=()=>{
+   for(const b of frozen){
+    const dx=active.x-b.x,dy=active.y-b.y,d=Math.hypot(dx,dy),min=active.r+b.r
+    if(d>=min)continue
+    const nx=d<.0001?1:dx/d,ny=d<.0001?0:dy/d
+    active.x=b.x+nx*min;active.y=b.y+ny*min
+    const vn=active.vx*nx+active.vy*ny
+    if(vn<0){
+     active.vx-=2*vn*nx;active.vy-=2*vn*ny
+     burst(active.x-nx*active.r,active.y-ny*active.r,'#d8f7ff',16);playNote()
+    }
+   }
+  }
+
+  spawn()
+  const frame=(now:number)=>{
+   const raw=Math.min(now-last,50),dt=raw/16.666;last=now
+   ctx.fillStyle='#05070d';ctx.fillRect(0,0,w,h)
+   const cx=w/2,cy=h/2,r=R()
+   const bg=ctx.createRadialGradient(cx,cy,1,cx,cy,r*1.8);bg.addColorStop(0,'#35166b22');bg.addColorStop(1,'#0000');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h)
+
+   if(running&&!ended){
+    timer-=raw/1000
+    opening+=.0019*dt
+    const steps=5,step=dt/steps
+    for(let s=0;s<steps;s++){
+     active.vy+=.000012*step
+     active.x+=active.vx*step;active.y+=active.vy*step
+     collideFrozen()
+     const dx=active.x-cx,dy=active.y-cy,d=Math.hypot(dx,dy),limit=r-active.r
+     if(d>=limit){
+      const nx=dx/Math.max(d,.0001),ny=dy/Math.max(d,.0001),ang=Math.atan2(ny,nx)
+      if(openingHit(ang)&&(active.vx*nx+active.vy*ny)>0){
+       ended=true;burst(active.x,active.y,'#fff',110);burst(active.x,active.y,'#7c3cff',80);playNote()
+      }else{
+       active.x=cx+nx*limit;active.y=cy+ny*limit
+       const vn=active.vx*nx+active.vy*ny
+       if(vn>0){active.vx-=2*vn*nx;active.vy-=2*vn*ny;burst(cx+nx*limit,cy+ny*limit,'#00e5ff',16);playNote()}
+      }
+     }
+    }
+    if(timer<=0)freeze()
+    trail.push({x:active.x,y:active.y});if(trail.length>100)trail.shift()
+   }
+
+   ctx.save();ctx.shadowBlur=35;ctx.shadowColor='#00e5ff';ctx.strokeStyle='#00e5ff35';ctx.lineWidth=12;ctx.beginPath();ctx.arc(cx,cy,r+4,0,Math.PI*2);ctx.stroke();ctx.restore()
+   ctx.strokeStyle='#00e5ffbb';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke()
+   ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.shadowBlur=20;ctx.shadowColor='#fff';ctx.beginPath();ctx.arc(cx,cy,r,opening-Math.PI*.15,opening+Math.PI*.15);ctx.stroke();ctx.restore()
+
+   for(let i=1;i<trail.length;i++){const a=i/trail.length;ctx.globalAlpha=a*.5;ctx.strokeStyle=i%2?'#7c3cff':'#00e5ff';ctx.lineWidth=1+a*5;ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke()}ctx.globalAlpha=1
+
+   for(const b of frozen){ctx.save();ctx.shadowBlur=22;ctx.shadowColor='#9be7ff';ctx.fillStyle='#a9bbc8';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#e9fcff';ctx.lineWidth=1.5;ctx.stroke();ctx.restore()}
+   if(!ended){ctx.save();ctx.shadowBlur=35;ctx.shadowColor='#ff3cac';ctx.fillStyle='#ff3cac';ctx.beginPath();ctx.arc(active.x,active.y,active.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(active.x-active.r*.28,active.y-active.r*.3,active.r*.2,0,Math.PI*2);ctx.fill();ctx.restore()}
+
+   ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 30px Space Grotesk, sans-serif';ctx.fillStyle='#fff';ctx.shadowBlur=20;ctx.shadowColor='#7c3cff';ctx.fillText(ended?'ESCAPED':Math.ceil(Math.max(timer,0)).toString(),cx,cy);ctx.shadowBlur=0;ctx.font='600 7px DM Sans,sans-serif';ctx.fillStyle='#ffffff66';ctx.fillText(ended?'SESSION COMPLETE':'FREEZE TIMER',cx,cy+25)
+
+   for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.985;p.vy*=.985;p.life-=.02*dt;if(p.life<=0){particles.splice(i,1);continue}ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.shadowBlur=12;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1
+   raf=requestAnimationFrame(frame)
+  }
+  canvas.addEventListener('pointerdown',audioOn)
+  raf=requestAnimationFrame(frame)
+  return()=>{cancelAnimationFrame(raf);removeEventListener('resize',resize);canvas.removeEventListener('pointerdown',audioOn)}
+ },[running,seed])
+
+ const reset=()=>setSeed(s=>s+1)
  const record=()=>{
-  const canvas=canvasRef.current;if(!canvas)return
-  if(recording){mediaRef.current?.stop();return}
-  const stream=canvas.captureStream(60)
-  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm'
-  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000})
-  chunksRef.current=[]
-  rec.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)}
-  rec.onstop=()=>{const blob=new Blob(chunksRef.current,{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`hypnorai-${mode}-seed-${seed}.webm`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setRecording(false)}
-  mediaRef.current=rec;rec.start();setRecording(true)
+  const c=canvasRef.current;if(!c)return
+  if(recording){recorder.current?.stop();return}
+  const stream=c.captureStream(60),mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm'
+  const r=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});chunks.current=[]
+  r.ondataavailable=e=>e.data.size&&chunks.current.push(e.data)
+  r.onstop=()=>{const u=URL.createObjectURL(new Blob(chunks.current,{type:mime}));const a=document.createElement('a');a.href=u;a.download=`hypnorai-musical-${seed}.webm`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);setRecording(false)}
+  recorder.current=r;r.start();setRecording(true)
  }
+
  return <main className="app-shell">
-  <header className="topbar"><div className="brand"><span className="brand-mark">✦</span> HYPNORAI <small>STUDIO</small></div><div className="top-status"><span className="status-dot"/> ENGINE ONLINE <span className="top-divider"/> 2.0</div></header>
+  <header className="topbar"><div className="brand"><span className="brand-mark">✦</span> HYPNORAI <small>STUDIO</small></div><div className="top-status"><span className="status-dot"/> MUSICAL PHYSICS ENGINE <span className="top-divider"/> V3.0</div></header>
   <section className="workspace">
-   <div className="preview-column">
-    <div className="preview-head"><div><span className="live-dot"/> LIVE CANVAS · 9:16</div><button className="ghost-btn" onClick={()=>setRunning(v=>!v)}>{running?'Ⅱ Pause':'▶ Play'}</button></div>
-    <div className="canvas-wrap"><canvas ref={canvasRef}/><div className="preview-meta"><span>{MODES.find(m=>m.id===mode)?.name.toUpperCase()}</span><span>SEED {seed.toString().padStart(3,'0')}</span></div><div className="corner corner-tl"/><div className="corner corner-tr"/><div className="corner corner-bl"/><div className="corner corner-br"/></div>
+   <div className="preview-column"><div className="preview-head"><div><span className="live-dot"/> LIVE CANVAS · 9:16</div><button className="ghost-btn" onClick={()=>setRunning(v=>!v)}>{running?'Ⅱ Pause':'▶ Play'}</button></div>
+    <div className="canvas-wrap"><canvas ref={canvasRef}/><div className="preview-meta"><span>MUSICAL BOUNCING BALL</span><span>SEED {seed.toString().padStart(3,'0')}</span></div><div className="corner corner-tl"/><div className="corner corner-tr"/><div className="corner corner-bl"/><div className="corner corner-br"/></div>
    </div>
-   <aside className="controls">
-    <div className="eyebrow">HYPNOTIC VIDEO ENGINE / V2.0</div>
-    <h1>Make them<br/><em>watch.</em></h1>
-    <p className="intro">Des boucles visuelles pensées pour le format vertical : mouvement continu, micro-événements et variations déterministes.</p>
-    <div className="control-group"><div className="section-title">Generator <span>01</span></div><div className="mode-grid">{MODES.map(m=><button key={m.id} onClick={()=>setMode(m.id)} className={mode===m.id?'mode-card active':'mode-card'}><div className="mode-icon">{m.icon}</div><div><strong>{m.name}</strong><span>{m.desc}</span></div></button>)}</div></div>
-    <div className="control-group"><div className="section-title">Palette <span>02</span></div><div className="palette-row">{THEMES.map((t,i)=><button key={t.name} className={themeIndex===i?'palette active':'palette'} onClick={()=>setThemeIndex(i)}><div className="palette-colors">{t.colors.map(c=><span key={c} style={{background:c}}/>)}</div><small>{t.name}</small></button>)}</div></div>
-    <div className="sliders">
-      <div className="control-group compact"><div className="slider-label"><label>Speed</label><b>{speed.toFixed(1)}×</b></div><input type="range" min=".4" max="2.4" step=".1" value={speed} onChange={e=>setSpeed(+e.target.value)}/></div>
-      <div className="control-group compact"><div className="slider-label"><label>Intensity</label><b>{Math.round(intensity*100)}%</b></div><input type="range" min="0" max="1" step=".05" value={intensity} onChange={e=>setIntensity(+e.target.value)}/></div>
-    </div>
-    <div className="toggles"><button onClick={()=>setTrail(v=>!v)} className={trail?'toggle on':'toggle'}><span/> Trail <b>{trail?'ON':'OFF'}</b></button><button onClick={()=>setParticles(v=>!v)} className={particles?'toggle on':'toggle'}><span/> Particles <b>{particles?'ON':'OFF'}</b></button></div>
-    <div className="actions"><button className="generate" onClick={generate}><span>✦</span> Generate variation <kbd>SPACE</kbd></button><button className={recording?'record recording':'record'} onClick={record}><span/> {recording?'Stop & download':'Record video'}</button></div>
-    <div className="microcopy">V2.0 · vertical-first · browser recording · WebM</div>
+   <aside className="controls"><div className="eyebrow">HYPNORAI / MUSICAL PHYSICS</div><h1>Make them<br/><em>watch.</em></h1><p className="intro">Spawn déterministe, freeze à zéro, collisions continues avec les boules figées et une note à chaque impact.</p>
+    <div className="control-group"><div className="section-title">Mechanics <span>01</span></div><div className="template-card"><div className="template-icon">◉</div><div><strong>Musical Bouncing Ball</strong><span>5s freeze · solid obstacles · rotating exit</span></div></div></div>
+    <div className="control-group"><div className="section-title">Physics <span>02</span></div><div className="mode-grid"><div className="mode-card active"><div className="mode-icon">1</div><div><strong>Same spawn</strong><span>same origin + vector</span></div></div><div className="mode-card active"><div className="mode-icon">∞</div><div><strong>Circle collision</strong><span>continuous substeps</span></div></div></div></div>
+    <div className="toggles"><button className="toggle on"><span/> Audio <b>ADSR</b></button><button className="toggle on"><span/> Particles <b>ON</b></button></div>
+    <div className="actions"><button className="generate" onClick={reset}><span>✦</span> New session <kbd>SPACE</kbd></button><button className={recording?'record recording':'record'} onClick={record}><span/> {recording?'Stop & download':'Record video'}</button></div>
+    <div className="microcopy">V3.0 · deterministic spawn · continuous circle collision · Web Audio ADSR · WebM</div>
    </aside>
   </section>
  </main>
 }
-export default App

@@ -51,6 +51,17 @@ input[type=range]{width:100%;accent-color:#6cf6ff}select{width:100%;background:#
 <aside class="side">
   <h2>Contrôles</h2><p class="sub">Modifie la simulation en temps réel.</p>
   <div class="group">
+    <div class="row"><label>Direction de lâcher</label><span class="value" id="aimVal">0°</span></div>
+    <div id="aimPad" style="position:relative;width:100%;aspect-ratio:1/1;max-height:220px;border:1px solid var(--line);border-radius:14px;background:radial-gradient(circle,rgba(108,246,255,.06),rgba(255,255,255,.015));overflow:hidden;cursor:crosshair;touch-action:none;">
+      <div id="aimCross" style="position:absolute;left:50%;top:50%;width:2px;height:100%;background:rgba(108,246,255,.2);transform:translateX(-50%);"></div>
+      <div style="position:absolute;left:50%;top:50%;width:100%;height:2px;background:rgba(108,246,255,.2);transform:translateY(-50%);"></div>
+      <div id="aimLine" style="position:absolute;left:50%;top:50%;width:42%;height:2px;background:var(--accent);transform-origin:0 50%;box-shadow:0 0 12px var(--accent);"></div>
+      <div id="aimDot" style="position:absolute;left:50%;top:50%;width:12px;height:12px;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 14px var(--accent);"></div>
+      <div style="position:absolute;inset:10px;pointer-events:none;border:1px dashed rgba(255,255,255,.08);border-radius:50%;"></div>
+    </div>
+    <p class="hint" style="margin-bottom:0">Clique ou fais glisser dans le viseur pour choisir le point de départ de la boule.</p>
+  </div>
+  <div class="group">
     <div class="row"><label>Gravité</label><span class="value" id="gravityVal"></span></div><input id="gravity" type="range" min="0" max="20" step=".1" value="9.8">
     <div class="row"><label>Restitution</label><span class="value" id="bounceVal"></span></div><input id="bounce" type="range" min="0" max=".7" step=".01" value=".18">
     <div class="row"><label>Gel / nouvelle boule</label><span class="value" id="freezeVal"></span></div><input id="freeze" type="range" min="1" max="10" step=".1" value="3">
@@ -276,15 +287,16 @@ const arena=new Arena();
 class Game {
   constructor(){
     this.running=false;this.paused=false;this.gravity=9.8;this.bounce=.18;this.freezeTime=3;this.rotation=18;this.gap=32;this.speed=0;this.rotationEnabled=true;this.draggingGap=false;
-    this.theme=THEMES.cyber;this.showTrails=true;this.showGrid=true;this.frozen=[];this.active=null;this.timer=this.freezeTime;
+    this.theme=THEMES.cyber;this.showTrails=true;this.showGrid=true;this.aimAngle=-Math.PI/2;this.frozen=[];this.active=null;this.timer=this.freezeTime;
     this.impactCount=0;this.noteCount=0;this.last=performance.now();this.escapeTimer=0;this.won=false;this.spawnAngle=-Math.PI/4;
   }
   resize(){const d=Math.min(devicePixelRatio||1,2),r=wrap.getBoundingClientRect();canvas.width=Math.floor(r.width*d);canvas.height=Math.floor(r.height*d);canvas.style.width=r.width+"px";canvas.style.height=r.height+"px";ctx.setTransform(d,0,0,d,0,0);this.w=r.width;this.h=r.height;arena.resize(this.w,this.h)}
   spawn(){
     // The ball is dropped from rest near the top of the bowl.
     // No artificial launch velocity: gravity creates the motion immediately.
-    const dropX=arena.cx;
-    const dropY=arena.cy-arena.radius*.72;
+    const dropRadius=arena.radius*.72;
+    const dropX=arena.cx+Math.cos(this.aimAngle)*dropRadius;
+    const dropY=arena.cy+Math.sin(this.aimAngle)*dropRadius;
     this.active=new Ball(dropX,dropY,0,0,9);
     this.timer=this.freezeTime;this.won=false;ui.centerMsg.classList.add("show");ui.centerSmall.textContent="GEL DANS";
   }
@@ -385,6 +397,27 @@ class Game {
   }
 }
 const game=new Game();
+
+const aimPad=$("aimPad"), aimLine=$("aimLine"), aimDot=$("aimDot"), aimVal=$("aimVal");
+function updateAim(angle){
+  game.aimAngle=angle;
+  const deg=((angle*180/Math.PI)+90+360)%360-180;
+  aimVal.textContent=Math.round(deg)+"°";
+  aimLine.style.transform="rotate("+angle+"rad)";
+  const x=50+42*Math.cos(angle), y=50+42*Math.sin(angle);
+  aimDot.style.left=x+"%"; aimDot.style.top=y+"%";
+  game.spawnAngle=angle;
+  if(!game.running) game.spawn();
+}
+function aimFromPointer(e){
+  const r=aimPad.getBoundingClientRect();
+  const x=e.clientX-r.left-r.width/2, y=e.clientY-r.top-r.height/2;
+  if(Math.hypot(x,y)<8)return;
+  updateAim(Math.atan2(y,x));
+}
+aimPad.addEventListener("pointerdown",e=>{aimPad.setPointerCapture(e.pointerId);aimFromPointer(e)});
+aimPad.addEventListener("pointermove",e=>{if(e.buttons)aimFromPointer(e)});
+updateAim(game.aimAngle);
 
 function normAngle(a){while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;return a}
 function bindRange(id,format,prop){

@@ -376,14 +376,19 @@ bindRange("speed",v=>v.toFixed(1),"speed");
 
 ui.theme.addEventListener("change",()=>{game.theme=THEMES[ui.theme.value]});
 ui.showTrails.addEventListener("change",()=>game.showTrails=ui.showTrails.checked);
-ui.showGrid.addEventListener("change",()=>game.showGrid=ui.showGrid.checked);\nui.rotationEnabled.addEventListener("change",()=>{game.rotationEnabled=ui.rotationEnabled.checked});
+ui.showGrid.addEventListener("change",()=>game.showGrid=ui.showGrid.checked);
+ui.rotationEnabled.addEventListener("change",()=>{game.rotationEnabled=ui.rotationEnabled.checked});
 ui.freeze.addEventListener("change",()=>{game.freezeTime=Number(ui.freeze.value)});
 ui.play.addEventListener("click",async()=>{if(!audio.enabled)await audio.enable();game.running?game.pause():game.start()});
 ui.reset.addEventListener("click",()=>game.reset());
 ui.enableAudio.addEventListener("click",()=>audio.toggle());
 ui.audioTop.addEventListener("click",()=>audio.toggle());
 ui.fullscreen.addEventListener("click",async()=>{if(!document.fullscreenElement)await wrap.requestFullscreen?.();else await document.exitFullscreen?.()});
-wrap.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;if(!audio.enabled)audio.enable();const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx);game.draggingGap=true;wrap.classList.add("dragging");try{wrap.setPointerCapture(e.pointerId)}catch{}});\nwrap.addEventListener("pointermove",e=>{if(!game.draggingGap)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx)});\nconst stopGapDrag=e=>{if(!game.draggingGap)return;game.draggingGap=false;wrap.classList.remove("dragging");try{wrap.releasePointerCapture(e.pointerId)}catch{}};\nwrap.addEventListener("pointerup",stopGapDrag);\nwrap.addEventListener("pointercancel",stopGapDrag);
+wrap.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;if(!audio.enabled)audio.enable();const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx);game.draggingGap=true;wrap.classList.add("dragging");try{wrap.setPointerCapture(e.pointerId)}catch{}});
+wrap.addEventListener("pointermove",e=>{if(!game.draggingGap)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx)});
+const stopGapDrag=e=>{if(!game.draggingGap)return;game.draggingGap=false;wrap.classList.remove("dragging");try{wrap.releasePointerCapture(e.pointerId)}catch{}};
+wrap.addEventListener("pointerup",stopGapDrag);
+wrap.addEventListener("pointercancel",stopGapDrag);
 
 window.addEventListener("resize",()=>game.resize());
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&game.running&&!game.paused)game.pause()});

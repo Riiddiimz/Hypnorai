@@ -227,7 +227,7 @@ class Arena {
     const nx=dx/(dist||1),ny=dy/(dist||1);
     ball.x=this.cx+nx*limit;ball.y=this.cy+ny*limit;
     const vn=ball.vx*nx+ball.vy*ny;
-    if(vn>0)return false;
+    if(vn<=0)return false;
     const e=game.bounce;
     ball.vx-= (1+e)*vn*nx;
     ball.vy-= (1+e)*vn*ny;

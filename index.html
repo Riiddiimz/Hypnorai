@@ -870,7 +870,7 @@
                 }
                 const nx = dx / Math.max(dist, 0.001);
                 const ny = dy / Math.max(dist, 0.001);
-                const targetDist = ring.radius - ball.radius - 1;
+                const targetDist = Math.max(1, ring.radius - ball.radius - 1);
                 ball.x = this.center.x + nx * targetDist;
                 ball.y = this.center.y + ny * targetDist;
                 const dot = ball.vx * nx + ball.vy * ny;

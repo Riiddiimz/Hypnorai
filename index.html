@@ -96,6 +96,9 @@
                     <button data-mode="destruction" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
                         <i class="fa-solid fa-compact-disc text-purple-400"></i> Ring Breaker
                     </button>
+                    <button data-mode="classic" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-circle-notch text-emerald-400"></i> Classic
+                    </button>
                     <button data-mode="web" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
                         <i class="fa-solid fa-draw-polygon text-yellow-400"></i> Rainbow Web
                     </button>
@@ -480,7 +483,7 @@
                 this.shockwaves = [];
                 
                 // Configurable parameters
-                this.mode = 'escape'; // 'escape', 'exponential', 'destruction', 'web'
+                this.mode = 'escape'; // 'escape', 'exponential', 'destruction', 'classic', 'web'
                 this.gravity = 0.2;
                 this.bounciness = 1.0;
                 this.ballRadius = 12;
@@ -504,6 +507,10 @@
                 // Destruction Mode Blocks
                 this.ringBlocks = [];
 
+                // Classic Mode — concentric rotating rings with one opening each.
+                this.classicRings = [];
+                this.classicCleared = 0;
+
                 // Rainbow Web Canvas persistent trail
                 this.webCanvas = document.createElement('canvas');
                 this.webCtx = this.webCanvas.getContext('2d');
@@ -525,6 +532,9 @@
 
                 if (this.mode === 'destruction') {
                     this.setupDestructionRings();
+                }
+                if (this.mode === 'classic') {
+                    this.setupClassicRings();
                 }
             }
 
@@ -551,6 +561,24 @@
                 vy = vy || (Math.random() - 0.5) * 8;
                 this.balls.push(new Ball(x, y, vx, vy, this.ballRadius, Math.random() * 360));
                 this.updateUI();
+            }
+
+            setupClassicRings() {
+                this.classicRings = [];
+                this.classicCleared = 0;
+                const ringCount = 6;
+                const innerRadius = Math.max(58, this.boundaryRadius * 0.22);
+                const spacing = Math.min(42, (this.boundaryRadius - innerRadius) / (ringCount - 1));
+                for (let i = 0; i < ringCount; i++) {
+                    this.classicRings.push({
+                        radius: innerRadius + i * spacing,
+                        gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.55),
+                        gapSize: Math.PI / 3.2,
+                        rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.20 + i * 0.035),
+                        hue: (i * 47 + 155) % 360,
+                        active: true
+                    });
+                }
             }
 
             setupDestructionRings() {
@@ -603,6 +631,11 @@
                 if (this.mode === 'escape') {
                     this.escapeGapAngle += 0.005;
                 }
+                if (this.mode === 'classic') {
+                    for (const ring of this.classicRings) {
+                        if (ring.active) ring.gapAngle += ring.rotationSpeed;
+                    }
+                }
 
                 // Update Shockwaves
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
@@ -644,6 +677,8 @@
                     } else if (this.mode === 'destruction') {
                         this.handleDestructionRingsCollision(ball);
                         this.handleOuterWallBounds(ball);
+                    } else if (this.mode === 'classic') {
+                        this.handleClassicRingsCollision(ball);
                     }
                 }
 
@@ -714,6 +749,42 @@
                     if (isEscapeMode) {
                         this.escapeCircleRadius = Math.max(this.escapeCircleRadius - 0.4, 60);
                     }
+                }
+            }
+
+            handleClassicRingsCollision(ball) {
+                const dx = ball.x - this.center.x;
+                const dy = ball.y - this.center.y;
+                const dist = Math.hypot(dx, dy);
+                const radialVelocity = (ball.vx * dx + ball.vy * dy) / Math.max(dist, 0.001);
+                const ring = this.classicRings.find(r => r.active);
+                if (!ring) {
+                    if (dist > this.boundaryRadius + ball.radius * 2) this.initMode();
+                    return;
+                }
+                if (Math.abs(dist - ring.radius) > ball.radius + 3 || radialVelocity <= 0) return;
+                let angle = Math.atan2(dy, dx) - ring.gapAngle;
+                angle = Math.atan2(Math.sin(angle), Math.cos(angle));
+                if (Math.abs(angle) <= ring.gapSize / 2) {
+                    ring.active = false;
+                    this.classicCleared++;
+                    this.totalBounces++;
+                    audioSynth.playBounceSound(Math.max(80, radialVelocity * radialVelocity));
+                    this.addEffects(this.center.x + Math.cos(ring.gapAngle) * ring.radius, this.center.y + Math.sin(ring.gapAngle) * ring.radius, 'hsl(' + ring.hue + ', 100%, 62%)');
+                    return;
+                }
+                const nx = dx / Math.max(dist, 0.001);
+                const ny = dy / Math.max(dist, 0.001);
+                const targetDist = ring.radius - ball.radius - 1;
+                ball.x = this.center.x + nx * targetDist;
+                ball.y = this.center.y + ny * targetDist;
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot > 0) {
+                    ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                    ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+                    this.totalBounces++;
+                    audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
+                    this.addEffects(ball.x, ball.y, 'hsl(' + ring.hue + ', 100%, 62%)');
                 }
             }
 
@@ -831,6 +902,30 @@
                     this.ctx.shadowColor = '#00f2fe';
                     this.ctx.shadowBlur = 20;
                     this.ctx.stroke();
+
+                } else if (this.mode === 'classic') {
+                    this.classicRings.forEach(ring => {
+                        if (!ring.active) return;
+                        const gap = ring.gapSize / 2;
+                        const start = ring.gapAngle + gap;
+                        const end = ring.gapAngle + Math.PI * 2 - gap;
+                        const color = 'hsl(' + ring.hue + ', 100%, 62%)';
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.center.x, this.center.y, ring.radius, start, end);
+                        this.ctx.strokeStyle = color;
+                        this.ctx.lineWidth = 8;
+                        this.ctx.shadowColor = color;
+                        this.ctx.shadowBlur = 14;
+                        this.ctx.stroke();
+                        const gx = this.center.x + Math.cos(ring.gapAngle) * ring.radius;
+                        const gy = this.center.y + Math.sin(ring.gapAngle) * ring.radius;
+                        this.ctx.fillStyle = '#fff';
+                        this.ctx.shadowColor = color;
+                        this.ctx.shadowBlur = 20;
+                        this.ctx.beginPath();
+                        this.ctx.arc(gx, gy, 4, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    });
 
                 } else if (this.mode === 'destruction') {
                     // Outer Ring

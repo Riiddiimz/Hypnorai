@@ -271,13 +271,8 @@
             </div>
         </div>
 
-        <!-- Instructions Overlay -->
-        <div id="clickHint" class="absolute bottom-6 z-10 text-xs text-slate-400 glass-panel px-4 py-2 rounded-full border border-slate-800/80 pointer-events-none transition-opacity duration-500 flex items-center gap-2">
-            <i class="fa-solid fa-hand-pointer text-pink-400 animate-bounce"></i> Click anywhere on canvas to launch a ball or trigger sound
-        </div>
-
         <!-- Main Canvas -->
-        <canvas id="simCanvas" class="w-full h-full cursor-pointer block"></canvas>
+        <canvas id="simCanvas" class="w-full h-full block"></canvas>
     </main>
 
     <script>
@@ -1006,16 +1001,14 @@
 
             bindEvents() {
                 window.addEventListener('resize', () => this.resize());
-
-                this.canvas.addEventListener('click', () => {
-                    audioSynth.init();
-                    document.getElementById('clickHint').style.opacity = '0';
-                });
             }
         }
 
         window.onload = function() {
             const sim = new Simulation();
+
+            // Initialize audio for automatic collision sounds when the browser allows it.
+            audioSynth.init();
 
             // Render Loop
             function animate() {

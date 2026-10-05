@@ -612,6 +612,19 @@
                 this.updateUI();
             }
 
+            getClassicRingHue(index) {
+                const palette = this.classicPalettes[this.classicPaletteName] || this.classicPalettes.neon;
+                return this.classicMultiColor
+                    ? palette[index % palette.length]
+                    : palette[0];
+            }
+
+            updateClassicRingColors() {
+                this.classicRings.forEach((ring, i) => {
+                    ring.hue = this.getClassicRingHue(i);
+                });
+            }
+
             setupClassicRings() {
                 this.classicRings = [];
                 this.classicCleared = 0;
@@ -624,9 +637,7 @@
                         gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.55),
                         gapSize: Math.PI / 3.2,
                         rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.20 + i * 0.035),
-                        hue: this.classicMultiColor
-                            ? this.classicPalettes[this.classicPaletteName][i % this.classicPalettes[this.classicPaletteName].length]
-                            : this.classicPalettes[this.classicPaletteName][0],
+                        hue: this.getClassicRingHue(i),
                         active: true
                     });
                 }
@@ -1083,12 +1094,12 @@
             document.getElementById('classicPaletteSelect').addEventListener('change', (e) => {
                 sim.classicPaletteName = e.target.value;
                 document.getElementById('classicPalettePreview').textContent = e.target.options[e.target.selectedIndex].text;
-                if (sim.mode === 'classic') sim.setupClassicRings();
+                if (sim.mode === 'classic') sim.updateClassicRingColors();
             });
 
             document.getElementById('classicMultiColorToggle').addEventListener('change', (e) => {
                 sim.classicMultiColor = e.target.checked;
-                if (sim.mode === 'classic') sim.setupClassicRings();
+                if (sim.mode === 'classic') sim.updateClassicRingColors();
             });
 
             // Visual Switches

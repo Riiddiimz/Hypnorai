@@ -889,50 +889,104 @@
             handleClassicSpikesCollision(ball) {
                 if (!this.classicSpikes) return;
 
-                const dx = ball.x - this.center.x;
-                const dy = ball.y - this.center.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist < 0.001) return;
-
                 const ring = this.classicRings.find(r => r.active);
                 if (!ring) return;
 
-                // Spikes point inward. They are evenly distributed over the
-                // circumference that remains outside the rotating opening.
+                // Treat every spike as a solid triangular collider, not just its tip.
+                // This prevents the ball from tunneling through the visible spike.
                 const availableArc = Math.PI * 2 - ring.gapSize;
                 const spikeStep = availableArc / this.classicSpikeCount;
                 const firstSpikeAngle = ring.gapAngle + ring.gapSize / 2 + spikeStep / 2;
-                const ballAngle = Math.atan2(dy, dx);
-                let relative = ballAngle - firstSpikeAngle;
-                relative = ((relative % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-
-                const spikeIndex = Math.round(relative / spikeStep);
-                if (spikeIndex < 0 || spikeIndex >= this.classicSpikeCount) return;
-
-                const spikeAngle = firstSpikeAngle + spikeIndex * spikeStep;
-                const angleDelta = Math.atan2(
-                    Math.sin(ballAngle - spikeAngle),
-                    Math.cos(ballAngle - spikeAngle)
-                );
-                if (Math.abs(angleDelta) > this.classicSpikeWidth) return;
-
-                // The spike base is on the outside of the ring and its tip points inward.
                 const spikeTipRadius = Math.max(1, ring.radius - this.classicSpikeLength);
-                if (Math.abs(dist - spikeTipRadius) > ball.radius + 2) return;
+                const baseRadius = ring.radius + 1;
+                const ballAngle = Math.atan2(ball.y - this.center.y, ball.x - this.center.x);
 
-                const nx = dx / dist;
-                const ny = dy / dist;
-                const dot = ball.vx * nx + ball.vy * ny;
-                if (dot >= 0) return;
+                const reflectFromNormal = (nx, ny, penetration) => {
+                    const len = Math.hypot(nx, ny) || 1;
+                    nx /= len;
+                    ny /= len;
+                    const dot = ball.vx * nx + ball.vy * ny;
 
-                ball.x = this.center.x + nx * (spikeTipRadius + ball.radius + 1);
-                ball.y = this.center.y + ny * (spikeTipRadius + ball.radius + 1);
-                ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
-                ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+                    // Only resolve an impact when the ball is moving into the spike.
+                    if (dot >= 0) return false;
 
-                this.totalBounces++;
-                audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
-                this.addEffects(ball.x, ball.y, 'hsl(' + ring.hue + ', 100%, 62%)');
+                    ball.x += nx * penetration;
+                    ball.y += ny * penetration;
+                    ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                    ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+                    this.totalBounces++;
+                    audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
+                    this.addEffects(ball.x, ball.y, 'hsl(' + ring.hue + ', 100%, 62%)');
+                    return true;
+                };
+
+                // Check several nearby spikes so the collision remains stable even
+                // when the ball moves quickly between frames.
+                const rawIndex = (ballAngle - firstSpikeAngle) / spikeStep;
+                const centerIndex = Math.round(rawIndex);
+
+                for (let offset = -1; offset <= 1; offset++) {
+                    const spikeIndex = centerIndex + offset;
+                    if (spikeIndex < 0 || spikeIndex >= this.classicSpikeCount) continue;
+
+                    const spikeAngle = firstSpikeAngle + spikeIndex * spikeStep;
+                    const ux = Math.cos(spikeAngle);
+                    const uy = Math.sin(spikeAngle);
+                    const tx = -uy;
+                    const ty = ux;
+
+                    // Triangle vertices: outer-left, inward tip, outer-right.
+                    const halfWidth = this.classicSpikeWidth;
+                    const leftX = this.center.x + Math.cos(spikeAngle - halfWidth) * baseRadius;
+                    const leftY = this.center.y + Math.sin(spikeAngle - halfWidth) * baseRadius;
+                    const tipX = this.center.x + ux * spikeTipRadius;
+                    const tipY = this.center.y + uy * spikeTipRadius;
+                    const rightX = this.center.x + Math.cos(spikeAngle + halfWidth) * baseRadius;
+                    const rightY = this.center.y + Math.sin(spikeAngle + halfWidth) * baseRadius;
+
+                    // Closest point on the three solid triangle edges.
+                    const closestOnSegment = (px, py, ax, ay, bx, by) => {
+                        const abx = bx - ax;
+                        const aby = by - ay;
+                        const lenSq = abx * abx + aby * aby;
+                        const t = lenSq > 0 ? Math.max(0, Math.min(1, ((px - ax) * abx + (py - ay) * aby) / lenSq)) : 0;
+                        return { x: ax + abx * t, y: ay + aby * t };
+                    };
+
+                    const candidates = [
+                        closestOnSegment(ball.x, ball.y, leftX, leftY, tipX, tipY),
+                        closestOnSegment(ball.x, ball.y, tipX, tipY, rightX, rightY),
+                        closestOnSegment(ball.x, ball.y, leftX, leftY, rightX, rightY)
+                    ];
+
+                    let best = null;
+                    let bestDistSq = Infinity;
+                    for (const p of candidates) {
+                        const ddx = ball.x - p.x;
+                        const ddy = ball.y - p.y;
+                        const d2 = ddx * ddx + ddy * ddy;
+                        if (d2 < bestDistSq) {
+                            bestDistSq = d2;
+                            best = p;
+                        }
+                    }
+
+                    const collisionRadius = ball.radius + 1;
+                    if (bestDistSq > collisionRadius * collisionRadius) continue;
+
+                    let nx = ball.x - best.x;
+                    let ny = ball.y - best.y;
+                    const normalLen = Math.hypot(nx, ny);
+
+                    // If the center is exactly on an edge, use the inward radial normal.
+                    if (normalLen < 0.001) {
+                        nx = ux;
+                        ny = uy;
+                    }
+
+                    const penetration = Math.max(0, collisionRadius - normalLen);
+                    if (reflectFromNormal(nx, ny, penetration)) return;
+                }
             }
 
             handleDestructionRingsCollision(ball) {

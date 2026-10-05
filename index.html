@@ -191,6 +191,28 @@
                         <span>Lente</span><span>Rapide</span>
                     </div>
                 </div>
+
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Palette des cercles</span>
+                        <span id="classicPalettePreview" class="text-slate-200">Neon</span>
+                    </div>
+                    <select id="classicPaletteSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        <option value="neon">Neon</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="candy">Candy</option>
+                        <option value="fire">Fire</option>
+                        <option value="forest">Forest</option>
+                        <option value="rainbow">Rainbow</option>
+                    </select>
+                </div>
+
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-xs text-slate-300">Mode multi-couleur</span>
+                    <input type="checkbox" id="classicMultiColorToggle" checked class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                </label>
             </div>
 
             <!-- Visual Toggles -->
@@ -529,6 +551,17 @@
                 this.classicRings = [];
                 this.classicCleared = 0;
                 this.classicRotationMultiplier = 0.12;
+                this.classicPaletteName = 'neon';
+                this.classicMultiColor = true;
+                this.classicPalettes = {
+                    neon: [320, 190, 275, 155, 225, 45],
+                    ocean: [185, 205, 225, 245, 265, 285],
+                    sunset: [350, 15, 30, 45, 15, 330],
+                    candy: [325, 345, 285, 250, 195, 220],
+                    fire: [0, 12, 25, 38, 48, 5],
+                    forest: [145, 165, 185, 115, 85, 200],
+                    rainbow: [0, 60, 120, 180, 240, 300]
+                };
 
                 // Rainbow Web Canvas persistent trail
                 this.webCanvas = document.createElement('canvas');
@@ -596,7 +629,9 @@
                         gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.55),
                         gapSize: Math.PI / 3.2,
                         rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.20 + i * 0.035),
-                        hue: (i * 47 + 155) % 360,
+                        hue: this.classicMultiColor
+                            ? this.classicPalettes[this.classicPaletteName][i % this.classicPalettes[this.classicPaletteName].length]
+                            : this.classicPalettes[this.classicPaletteName][0],
                         active: true
                     });
                 }
@@ -1064,6 +1099,18 @@
                 const value = parseFloat(e.target.value);
                 const label = value <= 0.4 ? 'Lente' : value <= 0.7 ? 'Normale' : 'Rapide';
                 document.getElementById('classicRotationValue').textContent = label;
+            });
+
+            // Classic Color Controls
+            document.getElementById('classicPaletteSelect').addEventListener('change', (e) => {
+                sim.classicPaletteName = e.target.value;
+                document.getElementById('classicPalettePreview').textContent = e.target.options[e.target.selectedIndex].text;
+                if (sim.mode === 'classic') sim.setupClassicRings();
+            });
+
+            document.getElementById('classicMultiColorToggle').addEventListener('change', (e) => {
+                sim.classicMultiColor = e.target.checked;
+                if (sim.mode === 'classic') sim.setupClassicRings();
             });
 
             // Visual Switches

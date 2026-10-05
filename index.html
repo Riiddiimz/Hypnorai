@@ -1007,23 +1007,8 @@
             bindEvents() {
                 window.addEventListener('resize', () => this.resize());
 
-                this.canvas.addEventListener('click', (e) => {
+                this.canvas.addEventListener('click', () => {
                     audioSynth.init();
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    // Launch ball towards click direction or spawn
-                    if (this.balls.length > 0) {
-                        const b = this.balls[0];
-                        const angle = Math.atan2(y - b.y, x - b.x);
-                        b.vx = Math.cos(angle) * 10;
-                        b.vy = Math.sin(angle) * 10;
-                    } else {
-                        this.spawnBall(x, y, (Math.random() - 0.5) * 6, -4);
-                    }
-
-                    // Hide click hint overlay
                     document.getElementById('clickHint').style.opacity = '0';
                 });
             }

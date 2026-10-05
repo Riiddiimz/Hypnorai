@@ -204,8 +204,19 @@
                 <label class="flex items-center justify-between cursor-pointer">
                     <span class="text-xs text-slate-300">Spike</span>
                     <input type="checkbox" id="classicSpikeToggle" class="sr-only peer">
-                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
                 </label>
+
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Nombre de spikes</span>
+                        <span id="classicSpikeCountValue" class="text-slate-200">10</span>
+                    </div>
+                    <input id="classicSpikeCountSlider" type="range" min="3" max="24" step="1" value="10" class="w-full accent-emerald-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>3</span><span>24</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Visual Toggles -->
@@ -882,39 +893,39 @@
                 const dist = Math.hypot(dx, dy);
                 if (dist < 0.001) return;
 
-                const ballAngle = Math.atan2(dy, dx);
                 const ring = this.classicRings.find(r => r.active);
                 if (!ring) return;
 
-                // Spikes are distributed around the rotating ring, but never inside its opening.
-                const relativeAngle = Math.atan2(
-                    Math.sin(ballAngle - ring.gapAngle),
-                    Math.cos(ballAngle - ring.gapAngle)
-                );
-                if (Math.abs(relativeAngle) <= ring.gapSize / 2) return;
+                // Spikes point inward. They are evenly distributed over the
+                // circumference that remains outside the rotating opening.
+                const availableArc = Math.PI * 2 - ring.gapSize;
+                const spikeStep = availableArc / this.classicSpikeCount;
+                const firstSpikeAngle = ring.gapAngle + ring.gapSize / 2 + spikeStep / 2;
+                const ballAngle = Math.atan2(dy, dx);
+                let relative = ballAngle - firstSpikeAngle;
+                relative = ((relative % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 
-                const spikeStep = (Math.PI * 2) / this.classicSpikeCount;
-                const spikeIndex = Math.round((ballAngle - ring.gapAngle) / spikeStep);
-                const spikeAngle = ring.gapAngle + spikeIndex * spikeStep;
+                const spikeIndex = Math.round(relative / spikeStep);
+                if (spikeIndex < 0 || spikeIndex >= this.classicSpikeCount) return;
+
+                const spikeAngle = firstSpikeAngle + spikeIndex * spikeStep;
                 const angleDelta = Math.atan2(
                     Math.sin(ballAngle - spikeAngle),
                     Math.cos(ballAngle - spikeAngle)
                 );
-
                 if (Math.abs(angleDelta) > this.classicSpikeWidth) return;
 
-                // The spike tip is outside the ring. Treat contact with the tip as a
-                // radial collision so it creates an additional bounce point.
-                const spikeTipRadius = ring.radius + this.classicSpikeLength;
+                // The spike base is on the outside of the ring and its tip points inward.
+                const spikeTipRadius = Math.max(1, ring.radius - this.classicSpikeLength);
                 if (Math.abs(dist - spikeTipRadius) > ball.radius + 2) return;
 
                 const nx = dx / dist;
                 const ny = dy / dist;
                 const dot = ball.vx * nx + ball.vy * ny;
-                if (dot <= 0) return;
+                if (dot >= 0) return;
 
-                ball.x = this.center.x + nx * (spikeTipRadius - ball.radius - 1);
-                ball.y = this.center.y + ny * (spikeTipRadius - ball.radius - 1);
+                ball.x = this.center.x + nx * (spikeTipRadius + ball.radius + 1);
+                ball.y = this.center.y + ny * (spikeTipRadius + ball.radius + 1);
                 ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
                 ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
 
@@ -1020,16 +1031,15 @@
                     this.ctx.stroke();
 
                     if (this.classicSpikes) {
-                        const spikeStep = (Math.PI * 2) / this.classicSpikeCount;
-                        const spikeTipRadius = ring.radius + this.classicSpikeLength;
-                        for (let s = 0; s < this.classicSpikeCount; s++) {
-                            const spikeAngle = ring.gapAngle + s * spikeStep;
-                            const gapDelta = Math.atan2(
-                                Math.sin(spikeAngle - ring.gapAngle),
-                                Math.cos(spikeAngle - ring.gapAngle)
-                            );
-                            if (Math.abs(gapDelta) <= ring.gapSize / 2 + this.classicSpikeWidth) continue;
+                        // Keep spikes evenly spaced over the usable circumference,
+                        // leaving the ring opening completely free.
+                        const availableArc = Math.PI * 2 - ring.gapSize;
+                        const spikeStep = availableArc / this.classicSpikeCount;
+                        const firstSpikeAngle = ring.gapAngle + ring.gapSize / 2 + spikeStep / 2;
+                        const spikeTipRadius = Math.max(1, ring.radius - this.classicSpikeLength);
 
+                        for (let s = 0; s < this.classicSpikeCount; s++) {
+                            const spikeAngle = firstSpikeAngle + s * spikeStep;
                             const halfWidth = this.classicSpikeWidth;
                             const baseRadius = ring.radius + 1;
                             const leftAngle = spikeAngle - halfWidth;
@@ -1054,6 +1064,7 @@
                             this.ctx.shadowBlur = 10;
                             this.ctx.fill();
                         }
+                    }
                     }
                 });
 
@@ -1170,6 +1181,11 @@
 
             document.getElementById('classicSpikeToggle').addEventListener('change', (e) => {
                 sim.classicSpikes = e.target.checked;
+            });
+
+            document.getElementById('classicSpikeCountSlider').addEventListener('input', (e) => {
+                sim.classicSpikeCount = parseInt(e.target.value, 10);
+                document.getElementById('classicSpikeCountValue').textContent = sim.classicSpikeCount;
             });
 
             // Visual Switches

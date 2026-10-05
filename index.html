@@ -285,6 +285,7 @@
             constructor() {
                 this.ctx = null;
                 this.volume = 0.8;
+                this.muted = false;
                 this.instrument = 'marimba';
                 this.scaleName = 'pentatonic';
                 this.scales = {
@@ -315,7 +316,7 @@
             }
 
             playBounceSound(velocitySq = 100) {
-                if (!this.ctx) return;
+                if (!this.ctx || this.muted || this.volume <= 0) return;
 
                 const scale = this.scales[this.scaleName] || this.scales.pentatonic;
                 const freq = scale[this.noteIndex % scale.length];
@@ -1136,9 +1137,24 @@
             });
 
             // Audio Controls
-            document.getElementById('audioInitBtn').addEventListener('click', () => {
+            const audioButton = document.getElementById('audioInitBtn');
+            audioButton.addEventListener('click', () => {
                 audioSynth.init();
-                audioSynth.playBounceSound(100);
+                audioSynth.muted = !audioSynth.muted;
+
+                const icon = audioButton.querySelector('i');
+                if (audioSynth.muted) {
+                    icon.className = 'fa-solid fa-volume-xmark';
+                    audioButton.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> Mute';
+                    audioButton.classList.remove('bg-emerald-500/20', 'border-emerald-500/50', 'text-emerald-400');
+                    audioButton.classList.add('bg-red-500/20', 'border-red-500/50', 'text-red-400');
+                    audioButton.setAttribute('aria-pressed', 'true');
+                } else {
+                    audioButton.innerHTML = '<i class="fa-solid fa-volume-high"></i> Audio';
+                    audioButton.classList.remove('bg-red-500/20', 'border-red-500/50', 'text-red-400');
+                    audioButton.classList.add('bg-emerald-500/20', 'border-emerald-500/50', 'text-emerald-400');
+                    audioButton.setAttribute('aria-pressed', 'false');
+                }
             });
 
             document.getElementById('instSelect').addEventListener('change', (e) => {

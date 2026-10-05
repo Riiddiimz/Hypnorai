@@ -296,11 +296,18 @@
             init() {
                 if (!this.ctx) {
                     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    this.ctx = new AudioCtx();
+                    if (!AudioCtx) return false;
+                    try {
+                        this.ctx = new AudioCtx();
+                    } catch (error) {
+                        console.warn('Web Audio unavailable:', error);
+                        return false;
+                    }
                 }
                 if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                    this.ctx.resume().catch(() => {});
                 }
+                return true;
             }
 
             playBounceSound(velocitySq = 100) {
@@ -394,10 +401,10 @@
                 this.decay = Math.random() * 0.03 + 0.015;
             }
 
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= this.decay;
+            update(dtScale = 1) {
+                this.x += this.vx * dtScale;
+                this.y += this.vy * dtScale;
+                this.alpha -= this.decay * dtScale;
             }
 
             draw(ctx) {
@@ -422,9 +429,9 @@
                 this.alpha = 0.9;
             }
 
-            update() {
-                this.radius += 2.5;
-                this.alpha -= 0.03;
+            update(dtScale = 1) {
+                this.radius += 2.5 * dtScale;
+                this.alpha -= 0.03 * dtScale;
             }
 
             draw(ctx) {
@@ -457,10 +464,10 @@
                 return `hsl(${this.hue}, 100%, 65%)`;
             }
 
-            update(gravity) {
-                this.vy += gravity;
-                this.x += this.vx;
-                this.y += this.vy;
+            update(gravity, dtScale = 1) {
+                this.vy += gravity * dtScale;
+                this.x += this.vx * dtScale;
+                this.y += this.vy * dtScale;
 
                 // Save trail positions
                 this.trail.push({ x: this.x, y: this.y, hue: this.hue });
@@ -572,16 +579,15 @@
                 this.canvas.width = rect.width;
                 this.canvas.height = rect.height;
                 this.center = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
-                this.boundaryRadius = Math.min(this.canvas.width, this.canvas.height) * 0.42;
+                this.boundaryRadius = Math.max(20, Math.min(this.canvas.width, this.canvas.height) * 0.42);
 
                 this.webCanvas.width = this.canvas.width;
                 this.webCanvas.height = this.canvas.height;
 
                 if (this.mode === 'destruction') {
                     this.setupDestructionRings();
-                }
-                if (this.mode === 'classic') {
-                    this.setupClassicRings();
+                } else if (this.mode === 'classic' && this.classicRings.length) {
+                    this.updateClassicRingGeometry();
                 }
             }
 
@@ -606,8 +612,8 @@
 
             spawnBall(x, y, vx, vy) {
                 if (this.balls.length >= 120) return; // Cap performance limit
-                vx = vx || (Math.random() - 0.5) * 8;
-                vy = vy || (Math.random() - 0.5) * 8;
+                vx = vx ?? ((Math.random() - 0.5) * 8);
+                vy = vy ?? ((Math.random() - 0.5) * 8);
                 this.balls.push(new Ball(x, y, vx, vy, this.ballRadius, Math.random() * 360));
                 this.updateUI();
             }
@@ -625,22 +631,40 @@
                 });
             }
 
-            setupClassicRings() {
-                this.classicRings = [];
-                this.classicCleared = 0;
+            setupClassicRings(resetState = true) {
                 const ringCount = 6;
-                const innerRadius = Math.max(58, this.boundaryRadius * 0.22);
-                const spacing = Math.min(42, (this.boundaryRadius - innerRadius) / (ringCount - 1));
-                for (let i = 0; i < ringCount; i++) {
-                    this.classicRings.push({
-                        radius: innerRadius + i * spacing,
-                        gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.55),
-                        gapSize: Math.PI / 3.2,
-                        rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.20 + i * 0.035),
-                        hue: this.getClassicRingHue(i),
-                        active: true
-                    });
+                if (resetState || this.classicRings.length !== ringCount) {
+                    this.classicRings = [];
+                    this.classicCleared = 0;
+                    for (let i = 0; i < ringCount; i++) {
+                        this.classicRings.push({
+                            radius: 0,
+                            gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.55),
+                            gapSize: Math.PI / 3.2,
+                            rotationSpeed: (i % 2 === 0 ? 1 : -1) * (0.20 + i * 0.035),
+                            hue: this.getClassicRingHue(i),
+                            active: true
+                        });
+                    }
                 }
+                this.updateClassicRingGeometry();
+            }
+
+            updateClassicRingGeometry() {
+                const ringCount = this.classicRings.length || 6;
+                const maxRadius = Math.max(20, this.boundaryRadius - 4);
+                const innerRadius = Math.min(
+                    maxRadius,
+                    Math.max(18, Math.min(58, this.boundaryRadius * 0.22))
+                );
+                const spacing = ringCount > 1
+                    ? Math.max(0, Math.min(42, (maxRadius - innerRadius) / (ringCount - 1)))
+                    : 0;
+
+                this.classicRings.forEach((ring, i) => {
+                    ring.radius = Math.min(maxRadius, innerRadius + i * spacing);
+                    ring.hue = this.getClassicRingHue(i);
+                });
             }
 
             setupDestructionRings() {
@@ -649,7 +673,7 @@
                 const ringSpacing = 28;
 
                 for (let r = 0; r < ringCount; r++) {
-                    const radius = this.boundaryRadius - (r * ringSpacing);
+                    const radius = Math.max(10, this.boundaryRadius - (r * ringSpacing));
                     const blocksInRing = 16 + r * 6;
                     const angleStep = (Math.PI * 2) / blocksInRing;
 
@@ -678,7 +702,10 @@
                 }
             }
 
-            update() {
+            update(dtScale = 1) {
+                // Keep physics stable after tab switches, resize events, or dropped frames.
+                dtScale = Math.min(Math.max(dtScale, 0.25), 2);
+
                 // Update FPS Counter
                 const now = performance.now();
                 this.frameCount++;
@@ -691,30 +718,32 @@
 
                 // Rotate Escape Mode opening slowly
                 if (this.mode === 'escape') {
-                    this.escapeGapAngle += 0.005;
+                    this.escapeGapAngle = (this.escapeGapAngle + 0.005 * dtScale) % (Math.PI * 2);
                 }
                 if (this.mode === 'classic') {
                     for (const ring of this.classicRings) {
-                        if (ring.active) ring.gapAngle += ring.rotationSpeed * this.classicRotationMultiplier;
+                        if (ring.active) {
+                            ring.gapAngle = (ring.gapAngle + ring.rotationSpeed * this.classicRotationMultiplier * dtScale) % (Math.PI * 2);
+                        }
                     }
                 }
 
                 // Update Shockwaves
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
-                    this.shockwaves[i].update();
+                    this.shockwaves[i].update(dtScale);
                     if (this.shockwaves[i].alpha <= 0) this.shockwaves.splice(i, 1);
                 }
 
                 // Update Particles
                 for (let i = this.particles.length - 1; i >= 0; i--) {
-                    this.particles[i].update();
+                    this.particles[i].update(dtScale);
                     if (this.particles[i].alpha <= 0) this.particles.splice(i, 1);
                 }
 
                 // Update Balls & Collisions
                 for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
                     const ball = this.balls[bIndex];
-                    ball.update(this.gravity);
+                    ball.update(this.gravity, dtScale);
 
                     // Web Trail Modepersistent drawing
                     if (this.mode === 'web') {
@@ -780,15 +809,19 @@
                     }
 
                     // Normal Circle Bounce Logic
-                    const nx = dx / dist;
-                    const ny = dy / dist;
+                    const safeDist = Math.max(dist, 0.001);
+                    const nx = dist > 0.001 ? dx / safeDist : 1;
+                    const ny = dist > 0.001 ? dy / safeDist : 0;
 
                     // Reposition ball inside boundary
                     ball.x = this.center.x + nx * (currentRadius - ball.radius);
                     ball.y = this.center.y + ny * (currentRadius - ball.radius);
 
-                    // Reflect Velocity: v' = v - 2 * (v . n) * n
+                    // Only reflect when moving toward the boundary.
                     const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot <= 0) return;
+
+                    // Reflect Velocity: v' = v - 2 * (v . n) * n
                     ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
                     ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
 
@@ -809,7 +842,7 @@
 
                     // Escape mode shrink circle slightly on bounce
                     if (isEscapeMode) {
-                        this.escapeCircleRadius = Math.max(this.escapeCircleRadius - 0.4, 60);
+                        this.escapeCircleRadius = Math.max(this.escapeCircleRadius - 0.4 * dtScale, 60);
                     }
                 }
             }
@@ -866,8 +899,9 @@
                             block.active = false;
 
                             // Reflect Velocity
-                            const nx = dx / dist;
-                            const ny = dy / dist;
+                            const safeDist = Math.max(dist, 0.001);
+                            const nx = dx / safeDist;
+                            const ny = dy / safeDist;
                             const dot = ball.vx * nx + ball.vy * ny;
                             ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
                             ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
@@ -887,12 +921,14 @@
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist + ball.radius >= this.boundaryRadius) {
-                    const nx = dx / dist;
-                    const ny = dy / dist;
+                    const safeDist = Math.max(dist, 0.001);
+                    const nx = dist > 0.001 ? dx / safeDist : 1;
+                    const ny = dist > 0.001 ? dy / safeDist : 0;
                     ball.x = this.center.x + nx * (this.boundaryRadius - ball.radius);
                     ball.y = this.center.y + ny * (this.boundaryRadius - ball.radius);
 
                     const dot = ball.vx * nx + ball.vy * ny;
+                    if (dot <= 0) return;
                     ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
                     ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
 
@@ -1021,13 +1057,24 @@
             // Initialize audio for automatic collision sounds when the browser allows it.
             audioSynth.init();
 
-            // Render Loop
-            function animate() {
-                sim.update();
-                sim.draw();
+            // Render Loop — target 60 FPS with frame-time normalization.
+            const targetFrameTime = 1000 / 60;
+            let lastFrameTime = 0;
+
+            function animate(timestamp) {
+                if (!lastFrameTime) lastFrameTime = timestamp;
+                const elapsed = timestamp - lastFrameTime;
+
+                if (elapsed >= targetFrameTime) {
+                    sim.update(elapsed / targetFrameTime);
+                    sim.draw();
+                    lastFrameTime = timestamp;
+                }
+
                 requestAnimationFrame(animate);
             }
-            animate();
+
+            requestAnimationFrame(animate);
 
             // Mode Selector Event Handler
             document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -1086,7 +1133,7 @@
             document.getElementById('classicRotationSlider').addEventListener('input', (e) => {
                 sim.classicRotationMultiplier = parseFloat(e.target.value);
                 const value = parseFloat(e.target.value);
-                const label = value <= 0.4 ? 'Lente' : value <= 0.7 ? 'Normale' : 'Rapide';
+                const label = value <= 0.2 ? 'Lente' : value <= 0.4 ? 'Normale' : 'Rapide';
                 document.getElementById('classicRotationValue').textContent = label;
             });
 

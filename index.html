@@ -394,10 +394,10 @@
                 this.decay = Math.random() * 0.03 + 0.015;
             }
 
-            update(dtScale = 1) {
-                this.x += this.vx * dtScale;
-                this.y += this.vy * dtScale;
-                this.alpha -= this.decay * dtScale;
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
             }
 
             draw(ctx) {
@@ -422,9 +422,9 @@
                 this.alpha = 0.9;
             }
 
-            update(dtScale = 1) {
-                this.radius += 2.5 * dtScale;
-                this.alpha -= 0.03 * dtScale;
+            update() {
+                this.radius += 2.5;
+                this.alpha -= 0.03;
             }
 
             draw(ctx) {
@@ -580,6 +580,9 @@
                 if (this.mode === 'destruction') {
                     this.setupDestructionRings();
                 }
+                if (this.mode === 'classic') {
+                    this.setupClassicRings();
+                }
             }
 
             initMode() {
@@ -675,7 +678,7 @@
                 }
             }
 
-            update(dtScale = 1) {
+            update() {
                 // Update FPS Counter
                 const now = performance.now();
                 this.frameCount++;
@@ -688,23 +691,23 @@
 
                 // Rotate Escape Mode opening slowly
                 if (this.mode === 'escape') {
-                    this.escapeGapAngle += 0.005 * dtScale;
+                    this.escapeGapAngle += 0.005;
                 }
                 if (this.mode === 'classic') {
                     for (const ring of this.classicRings) {
-                        if (ring.active) ring.gapAngle += ring.rotationSpeed * this.classicRotationMultiplier * dtScale;
+                        if (ring.active) ring.gapAngle += ring.rotationSpeed * this.classicRotationMultiplier;
                     }
                 }
 
                 // Update Shockwaves
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
-                    this.shockwaves[i].update(dtScale);
+                    this.shockwaves[i].update();
                     if (this.shockwaves[i].alpha <= 0) this.shockwaves.splice(i, 1);
                 }
 
                 // Update Particles
                 for (let i = this.particles.length - 1; i >= 0; i--) {
-                    this.particles[i].update(dtScale);
+                    this.particles[i].update();
                     if (this.particles[i].alpha <= 0) this.particles.splice(i, 1);
                 }
 
@@ -1019,18 +1022,12 @@
             audioSynth.init();
 
             // Render Loop
-            let lastFrameTime = 0;
-            const targetFrameTime = 1000 / 60;
-
-            function animate(timestamp) {
-                if (timestamp - lastFrameTime >= targetFrameTime) {
-                    sim.update((timestamp - lastFrameTime) / targetFrameTime || 1);
-                    sim.draw();
-                    lastFrameTime = timestamp;
-                }
+            function animate() {
+                sim.update();
+                sim.draw();
                 requestAnimationFrame(animate);
             }
-            requestAnimationFrame(animate);
+            animate();
 
             // Mode Selector Event Handler
             document.querySelectorAll('.mode-btn').forEach(btn => {

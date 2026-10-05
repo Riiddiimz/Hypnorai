@@ -394,8 +394,8 @@
                 this.decay = Math.random() * 0.03 + 0.015;
             }
 
-            update(dtScale = 1) {
-                this.x += this.vx * dtScale;
+            update() {
+                this.x += this.vx;
                 this.y += this.vy * dtScale;
                 this.alpha -= this.decay * dtScale;
             }
@@ -423,8 +423,8 @@
             }
 
             update(dtScale = 1) {
-                this.radius += 2.5 * dtScale;
-                this.alpha -= 0.03 * dtScale;
+                this.radius += 2.5;
+                this.alpha -= 0.03;
             }
 
             draw(ctx) {
@@ -450,7 +450,7 @@
                 this.radius = radius;
                 this.hue = hue || Math.floor(Math.random() * 360);
                 this.trail = [];
-                this.maxTrail = 12;
+                this.maxTrail = 18;
             }
 
             get color() {
@@ -512,7 +512,7 @@
         class Simulation {
             constructor() {
                 this.canvas = document.getElementById('simCanvas');
-                this.ctx = this.canvas.getContext('2d', { alpha: false, desynchronized: true });
+                this.ctx = this.canvas.getContext('2d');
                 this.balls = [];
                 this.particles = [];
                 this.shockwaves = [];
@@ -531,7 +531,6 @@
                 this.fps = 60;
                 this.lastTime = performance.now();
                 this.frameCount = 0;
-                this.lastFrameTime = this.lastTime;
 
                 // Mode Specific State
                 this.boundaryRadius = 0;
@@ -561,7 +560,7 @@
 
                 // Rainbow Web Canvas persistent trail
                 this.webCanvas = document.createElement('canvas');
-                this.webCtx = this.webCanvas.getContext('2d', { alpha: true, desynchronized: true });
+                this.webCtx = this.webCanvas.getContext('2d');
 
                 this.resize();
                 this.initMode();
@@ -702,20 +701,20 @@
 
                 // Update Shockwaves
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
-                    this.shockwaves[i].update(dtScale);
+                    this.shockwaves[i].update();
                     if (this.shockwaves[i].alpha <= 0) this.shockwaves.splice(i, 1);
                 }
 
                 // Update Particles
                 for (let i = this.particles.length - 1; i >= 0; i--) {
-                    this.particles[i].update(dtScale);
+                    this.particles[i].update();
                     if (this.particles[i].alpha <= 0) this.particles.splice(i, 1);
                 }
 
                 // Update Balls & Collisions
                 for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
                     const ball = this.balls[bIndex];
-                    ball.update(this.gravity * dtScale);
+                    ball.update(this.gravity);
 
                     // Web Trail Modepersistent drawing
                     if (this.mode === 'web') {
@@ -1022,18 +1021,13 @@
             // Initialize audio for automatic collision sounds when the browser allows it.
             audioSynth.init();
 
-            // High-refresh render loop: physics is normalized to a 60 FPS baseline
-            // while requestAnimationFrame follows the display's native refresh rate (120/144/165Hz...).
-            let lastFrame = performance.now();
-            function animate(now) {
-                const frameDelta = Math.min(now - lastFrame, 33.33);
-                lastFrame = now;
-                const dtScale = frameDelta / 16.6667;
-                sim.update(dtScale);
+            // Render Loop
+            function animate() {
+                sim.update();
                 sim.draw();
                 requestAnimationFrame(animate);
             }
-            requestAnimationFrame(animate);
+            animate();
 
             // Mode Selector Event Handler
             document.querySelectorAll('.mode-btn').forEach(btn => {

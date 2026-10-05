@@ -86,23 +86,10 @@
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                     <span><i class="fa-solid fa-gamepad text-pink-500 mr-1.5"></i> Game Mode</span>
                 </label>
-                <div class="grid grid-cols-2 gap-2" id="modeButtons">
-                    <button data-mode="escape" class="mode-btn px-3 py-2.5 rounded-xl border border-pink-500/50 bg-pink-500/10 text-white font-medium hover:bg-pink-500/20 transition flex items-center gap-2 text-xs">
-                        <i class="fa-solid fa-door-open text-pink-400"></i> Circular Escape
-                    </button>
-                    <button data-mode="exponential" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
-                        <i class="fa-solid fa-clone text-cyan-400"></i> Ball Duplication
-                    </button>
-                    <button data-mode="destruction" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
-                        <i class="fa-solid fa-compact-disc text-purple-400"></i> Ring Breaker
-                    </button>
-                    <button data-mode="classic" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
+                <div class="grid grid-cols-1 gap-2" id="modeButtons">
+                    <button data-mode="classic" class="mode-btn px-3 py-2.5 rounded-xl border border-pink-500/50 bg-pink-500/10 text-white font-medium hover:bg-pink-500/20 transition flex items-center gap-2 text-xs">
                         <i class="fa-solid fa-circle-notch text-emerald-400"></i> Classic
-                    </button>
-                    <button data-mode="web" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
-                        <i class="fa-solid fa-draw-polygon text-yellow-400"></i> Rainbow Web
-                    </button>
-                </div>
+                    </button>                </div>
             </div>
 
             <!-- Audio & Synth Controls -->
@@ -176,7 +163,7 @@
             </div>
 
             <!-- Mode-specific Options -->
-            <div id="classicOptions" class="p-3.5 rounded-2xl bg-slate-900/60 border border-emerald-500/20 space-y-3 hidden">
+            <div id="classicOptions" class="p-3.5 rounded-2xl bg-slate-900/60 border border-emerald-500/20 space-y-3">
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     <i class="fa-solid fa-circle-notch text-emerald-400 mr-1.5"></i> Classic Options
                 </div>
@@ -211,6 +198,12 @@
                 <label class="flex items-center justify-between cursor-pointer">
                     <span class="text-xs text-slate-300">Mode multi-couleur</span>
                     <input type="checkbox" id="classicMultiColorToggle" checked class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                </label>
+                
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-xs text-slate-300">Spike</span>
+                    <input type="checkbox" id="classicSpikeToggle" class="sr-only peer">
                     <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 relative"></div>
                 </label>
             </div>
@@ -525,7 +518,7 @@
                 this.shockwaves = [];
                 
                 // Configurable parameters
-                this.mode = 'escape'; // 'escape', 'exponential', 'destruction', 'classic', 'web'
+                this.mode = 'classic'; // Classic only
                 this.gravity = 0.2;
                 this.bounciness = 1.0;
                 this.ballRadius = 12;
@@ -555,6 +548,10 @@
                 this.classicRotationMultiplier = 0.12;
                 this.classicPaletteName = 'neon';
                 this.classicMultiColor = true;
+                this.classicSpikes = false;
+                this.classicSpikeCount = 10;
+                this.classicSpikeLength = 14;
+                this.classicSpikeWidth = 0.16;
                 this.classicPalettes = {
                     neon: [320, 190, 275, 155, 225, 45],
                     ocean: [185, 205, 225, 245, 265, 285],
@@ -603,11 +600,7 @@
                 // Add Initial Ball
                 this.spawnBall(this.center.x, this.center.y - 50, (Math.random() - 0.5) * 8, Math.random() * 4 - 2);
 
-                if (this.mode === 'destruction') {
-                    this.setupDestructionRings();
-                } else if (this.mode === 'classic') {
-                    this.setupClassicRings();
-                }
+                this.setupClassicRings();
             }
 
             spawnBall(x, y, vx, vy) {
@@ -716,10 +709,7 @@
                     document.getElementById('fpsCounter').textContent = this.fps;
                 }
 
-                // Rotate Escape Mode opening slowly
-                if (this.mode === 'escape') {
-                    this.escapeGapAngle = (this.escapeGapAngle + 0.005 * dtScale) % (Math.PI * 2);
-                }
+                // Rotate Classic rings.
                 if (this.mode === 'classic') {
                     for (const ring of this.classicRings) {
                         if (ring.active) {
@@ -770,6 +760,7 @@
                         this.handleOuterWallBounds(ball);
                     } else if (this.mode === 'classic') {
                         this.handleClassicRingsCollision(ball);
+                        this.handleClassicSpikesCollision(ball);
                     }
                 }
 
@@ -883,6 +874,55 @@
                 }
             }
 
+            handleClassicSpikesCollision(ball) {
+                if (!this.classicSpikes) return;
+
+                const dx = ball.x - this.center.x;
+                const dy = ball.y - this.center.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 0.001) return;
+
+                const ballAngle = Math.atan2(dy, dx);
+                const ring = this.classicRings.find(r => r.active);
+                if (!ring) return;
+
+                // Spikes are distributed around the rotating ring, but never inside its opening.
+                const relativeAngle = Math.atan2(
+                    Math.sin(ballAngle - ring.gapAngle),
+                    Math.cos(ballAngle - ring.gapAngle)
+                );
+                if (Math.abs(relativeAngle) <= ring.gapSize / 2) return;
+
+                const spikeStep = (Math.PI * 2) / this.classicSpikeCount;
+                const spikeIndex = Math.round((ballAngle - ring.gapAngle) / spikeStep);
+                const spikeAngle = ring.gapAngle + spikeIndex * spikeStep;
+                const angleDelta = Math.atan2(
+                    Math.sin(ballAngle - spikeAngle),
+                    Math.cos(ballAngle - spikeAngle)
+                );
+
+                if (Math.abs(angleDelta) > this.classicSpikeWidth) return;
+
+                // The spike tip is outside the ring. Treat contact with the tip as a
+                // radial collision so it creates an additional bounce point.
+                const spikeTipRadius = ring.radius + this.classicSpikeLength;
+                if (Math.abs(dist - spikeTipRadius) > ball.radius + 2) return;
+
+                const nx = dx / dist;
+                const ny = dy / dist;
+                const dot = ball.vx * nx + ball.vy * ny;
+                if (dot <= 0) return;
+
+                ball.x = this.center.x + nx * (spikeTipRadius - ball.radius - 1);
+                ball.y = this.center.y + ny * (spikeTipRadius - ball.radius - 1);
+                ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+
+                this.totalBounces++;
+                audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
+                this.addEffects(ball.x, ball.y, 'hsl(' + ring.hue + ', 100%, 62%)');
+            }
+
             handleDestructionRingsCollision(ball) {
                 const dx = ball.x - this.center.x;
                 const dy = ball.y - this.center.y;
@@ -964,79 +1004,58 @@
             drawBoundary() {
                 this.ctx.save();
 
-                if (this.mode === 'escape') {
-                    // Circular Boundary with Escape Opening
-                    const r = this.escapeCircleRadius;
-                    const gap = this.escapeGapSize;
-                    const start = this.escapeGapAngle + gap / 2;
-                    const end = this.escapeGapAngle + Math.PI * 2 - gap / 2;
+                this.classicRings.forEach(ring => {
+                    if (!ring.active) return;
+                    const gap = ring.gapSize / 2;
+                    const start = ring.gapAngle + gap;
+                    const end = ring.gapAngle + Math.PI * 2 - gap;
+                    const color = 'hsl(' + ring.hue + ', 100%, 62%)';
 
                     this.ctx.beginPath();
-                    this.ctx.arc(this.center.x, this.center.y, r, start, end);
-                    this.ctx.strokeStyle = '#ff2a85';
-                    this.ctx.lineWidth = 6;
-                    this.ctx.shadowColor = '#ff2a85';
-                    this.ctx.shadowBlur = 18;
+                    this.ctx.arc(this.center.x, this.center.y, ring.radius, start, end);
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = 8;
+                    this.ctx.shadowColor = color;
+                    this.ctx.shadowBlur = 14;
                     this.ctx.stroke();
 
-                    // Draw Opening Ends Cap Accent
-                    const x1 = this.center.x + Math.cos(start) * r;
-                    const y1 = this.center.y + Math.sin(start) * r;
-                    const x2 = this.center.x + Math.cos(end) * r;
-                    const y2 = this.center.y + Math.sin(end) * r;
+                    if (this.classicSpikes) {
+                        const spikeStep = (Math.PI * 2) / this.classicSpikeCount;
+                        const spikeTipRadius = ring.radius + this.classicSpikeLength;
+                        for (let s = 0; s < this.classicSpikeCount; s++) {
+                            const spikeAngle = ring.gapAngle + s * spikeStep;
+                            const gapDelta = Math.atan2(
+                                Math.sin(spikeAngle - ring.gapAngle),
+                                Math.cos(spikeAngle - ring.gapAngle)
+                            );
+                            if (Math.abs(gapDelta) <= ring.gapSize / 2 + this.classicSpikeWidth) continue;
 
-                    this.ctx.fillStyle = '#00f2fe';
-                    this.ctx.beginPath();
-                    this.ctx.arc(x1, y1, 5, 0, Math.PI * 2);
-                    this.ctx.arc(x2, y2, 5, 0, Math.PI * 2);
-                    this.ctx.fill();
+                            const halfWidth = this.classicSpikeWidth;
+                            const baseRadius = ring.radius + 1;
+                            const leftAngle = spikeAngle - halfWidth;
+                            const rightAngle = spikeAngle + halfWidth;
 
-                } else if (this.mode === 'exponential' || this.mode === 'web') {
-                    // Outer Neon Ring
-                    this.ctx.beginPath();
-                    this.ctx.arc(this.center.x, this.center.y, this.boundaryRadius, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = '#00f2fe';
-                    this.ctx.lineWidth = 5;
-                    this.ctx.shadowColor = '#00f2fe';
-                    this.ctx.shadowBlur = 20;
-                    this.ctx.stroke();
-
-                } else if (this.mode === 'classic') {
-                    this.classicRings.forEach(ring => {
-                        if (!ring.active) return;
-                        const gap = ring.gapSize / 2;
-                        const start = ring.gapAngle + gap;
-                        const end = ring.gapAngle + Math.PI * 2 - gap;
-                        const color = 'hsl(' + ring.hue + ', 100%, 62%)';
-                        this.ctx.beginPath();
-                        this.ctx.arc(this.center.x, this.center.y, ring.radius, start, end);
-                        this.ctx.strokeStyle = color;
-                        this.ctx.lineWidth = 8;
-                        this.ctx.shadowColor = color;
-                        this.ctx.shadowBlur = 14;
-                        this.ctx.stroke();
-                    });
-
-                } else if (this.mode === 'destruction') {
-                    // Outer Ring
-                    this.ctx.beginPath();
-                    this.ctx.arc(this.center.x, this.center.y, this.boundaryRadius, 0, Math.PI * 2);
-                    this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.stroke();
-
-                    // Render Ring Blocks
-                    this.ringBlocks.forEach(block => {
-                        if (!block.active) return;
-                        this.ctx.beginPath();
-                        this.ctx.arc(this.center.x, this.center.y, block.ringRadius, block.startAngle, block.endAngle);
-                        this.ctx.strokeStyle = `hsl(${block.hue}, 100%, 60%)`;
-                        this.ctx.lineWidth = 12;
-                        this.ctx.shadowColor = `hsl(${block.hue}, 100%, 60%)`;
-                        this.ctx.shadowBlur = 8;
-                        this.ctx.stroke();
-                    });
-                }
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(
+                                this.center.x + Math.cos(leftAngle) * baseRadius,
+                                this.center.y + Math.sin(leftAngle) * baseRadius
+                            );
+                            this.ctx.lineTo(
+                                this.center.x + Math.cos(spikeAngle) * spikeTipRadius,
+                                this.center.y + Math.sin(spikeAngle) * spikeTipRadius
+                            );
+                            this.ctx.lineTo(
+                                this.center.x + Math.cos(rightAngle) * baseRadius,
+                                this.center.y + Math.sin(rightAngle) * baseRadius
+                            );
+                            this.ctx.closePath();
+                            this.ctx.fillStyle = color;
+                            this.ctx.shadowColor = color;
+                            this.ctx.shadowBlur = 10;
+                            this.ctx.fill();
+                        }
+                    }
+                });
 
                 this.ctx.restore();
             }
@@ -1086,8 +1105,8 @@
                     btn.classList.remove('border-slate-700', 'bg-slate-800/50', 'text-slate-300');
                     btn.classList.add('border-pink-500/50', 'bg-pink-500/10', 'text-white');
 
-                    sim.mode = btn.dataset.mode;
-                    document.getElementById('classicOptions').classList.toggle('hidden', sim.mode !== 'classic');
+                    sim.mode = 'classic';
+                    document.getElementById('classicOptions').classList.remove('hidden');
                     sim.initMode();
                 });
             });
@@ -1147,6 +1166,10 @@
             document.getElementById('classicMultiColorToggle').addEventListener('change', (e) => {
                 sim.classicMultiColor = e.target.checked;
                 if (sim.mode === 'classic') sim.updateClassicRingColors();
+            });
+
+            document.getElementById('classicSpikeToggle').addEventListener('change', (e) => {
+                sim.classicSpikes = e.target.checked;
             });
 
             // Visual Switches

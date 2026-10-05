@@ -186,7 +186,7 @@
                         <span>Vitesse de rotation</span>
                         <span id="classicRotationValue" class="text-slate-200">Lente</span>
                     </div>
-                    <input id="classicRotationSlider" type="range" min="0.2" max="1" step="0.05" value="0.35" class="w-full accent-emerald-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    <input id="classicRotationSlider" type="range" min="0.02" max="0.6" step="0.01" value="0.12" class="w-full accent-emerald-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
                     <div class="flex justify-between text-[10px] text-slate-500 mt-1">
                         <span>Lente</span><span>Rapide</span>
                     </div>
@@ -528,7 +528,7 @@
                 // Classic Mode — concentric rotating rings with one opening each.
                 this.classicRings = [];
                 this.classicCleared = 0;
-                this.classicRotationMultiplier = 0.35;
+                this.classicRotationMultiplier = 0.12;
 
                 // Rainbow Web Canvas persistent trail
                 this.webCanvas = document.createElement('canvas');

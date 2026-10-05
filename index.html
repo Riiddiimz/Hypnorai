@@ -175,6 +175,24 @@
                 </div>
             </div>
 
+            <!-- Mode-specific Options -->
+            <div id="classicOptions" class="p-3.5 rounded-2xl bg-slate-900/60 border border-emerald-500/20 space-y-3 hidden">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-circle-notch text-emerald-400 mr-1.5"></i> Classic Options
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Vitesse de rotation</span>
+                        <span id="classicRotationValue" class="text-slate-200">Lente</span>
+                    </div>
+                    <input id="classicRotationSlider" type="range" min="0.2" max="1" step="0.05" value="0.35" class="w-full accent-emerald-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Lente</span><span>Rapide</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Visual Toggles -->
             <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2.5">
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -510,6 +528,7 @@
                 // Classic Mode — concentric rotating rings with one opening each.
                 this.classicRings = [];
                 this.classicCleared = 0;
+                this.classicRotationMultiplier = 0.35;
 
                 // Rainbow Web Canvas persistent trail
                 this.webCanvas = document.createElement('canvas');
@@ -633,7 +652,7 @@
                 }
                 if (this.mode === 'classic') {
                     for (const ring of this.classicRings) {
-                        if (ring.active) ring.gapAngle += ring.rotationSpeed;
+                        if (ring.active) ring.gapAngle += ring.rotationSpeed * this.classicRotationMultiplier;
                     }
                 }
 
@@ -1003,6 +1022,7 @@
                     btn.classList.add('border-pink-500/50', 'bg-pink-500/10', 'text-white');
 
                     sim.mode = btn.dataset.mode;
+                    document.getElementById('classicOptions').classList.toggle('hidden', sim.mode !== 'classic');
                     sim.initMode();
                 });
             });
@@ -1042,6 +1062,14 @@
                 sim.ballRadius = parseInt(e.target.value);
                 document.getElementById('radiusVal').textContent = `${sim.ballRadius}px`;
                 sim.balls.forEach(b => b.radius = sim.ballRadius);
+            });
+
+            // Classic Mode Controls
+            document.getElementById('classicRotationSlider').addEventListener('input', (e) => {
+                sim.classicRotationMultiplier = parseFloat(e.target.value);
+                const value = parseFloat(e.target.value);
+                const label = value <= 0.4 ? 'Lente' : value <= 0.7 ? 'Normale' : 'Rapide';
+                document.getElementById('classicRotationValue').textContent = label;
             });
 
             // Visual Switches

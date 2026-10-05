@@ -938,14 +938,6 @@
                         this.ctx.shadowColor = color;
                         this.ctx.shadowBlur = 14;
                         this.ctx.stroke();
-                        const gx = this.center.x + Math.cos(ring.gapAngle) * ring.radius;
-                        const gy = this.center.y + Math.sin(ring.gapAngle) * ring.radius;
-                        this.ctx.fillStyle = '#fff';
-                        this.ctx.shadowColor = color;
-                        this.ctx.shadowBlur = 20;
-                        this.ctx.beginPath();
-                        this.ctx.arc(gx, gy, 4, 0, Math.PI * 2);
-                        this.ctx.fill();
                     });
 
                 } else if (this.mode === 'destruction') {

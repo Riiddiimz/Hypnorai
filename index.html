@@ -394,8 +394,8 @@
                 this.decay = Math.random() * 0.03 + 0.015;
             }
 
-            update() {
-                this.x += this.vx;
+            update(dtScale = 1) {
+                this.x += this.vx * dtScale;
                 this.y += this.vy * dtScale;
                 this.alpha -= this.decay * dtScale;
             }
@@ -423,8 +423,8 @@
             }
 
             update(dtScale = 1) {
-                this.radius += 2.5;
-                this.alpha -= 0.03;
+                this.radius += 2.5 * dtScale;
+                this.alpha -= 0.03 * dtScale;
             }
 
             draw(ctx) {
@@ -580,9 +580,6 @@
                 if (this.mode === 'destruction') {
                     this.setupDestructionRings();
                 }
-                if (this.mode === 'classic') {
-                    this.setupClassicRings();
-                }
             }
 
             initMode() {
@@ -701,13 +698,13 @@
 
                 // Update Shockwaves
                 for (let i = this.shockwaves.length - 1; i >= 0; i--) {
-                    this.shockwaves[i].update();
+                    this.shockwaves[i].update(dtScale);
                     if (this.shockwaves[i].alpha <= 0) this.shockwaves.splice(i, 1);
                 }
 
                 // Update Particles
                 for (let i = this.particles.length - 1; i >= 0; i--) {
-                    this.particles[i].update();
+                    this.particles[i].update(dtScale);
                     if (this.particles[i].alpha <= 0) this.particles.splice(i, 1);
                 }
 
@@ -1022,12 +1019,18 @@
             audioSynth.init();
 
             // Render Loop
-            function animate() {
-                sim.update();
-                sim.draw();
+            let lastFrameTime = 0;
+            const targetFrameTime = 1000 / 60;
+
+            function animate(timestamp) {
+                if (timestamp - lastFrameTime >= targetFrameTime) {
+                    sim.update((timestamp - lastFrameTime) / targetFrameTime || 1);
+                    sim.draw();
+                    lastFrameTime = timestamp;
+                }
                 requestAnimationFrame(animate);
             }
-            animate();
+            requestAnimationFrame(animate);
 
             // Mode Selector Event Handler
             document.querySelectorAll('.mode-btn').forEach(btn => {

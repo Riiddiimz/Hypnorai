@@ -1083,8 +1083,22 @@
         window.onload = function() {
             const sim = new Simulation();
 
-            // Initialize audio for automatic collision sounds when the browser allows it.
+            // Prepare audio immediately. Browsers may block autoplay until the
+            // user interacts with the page; the first interaction unlocks the AudioContext.
             audioSynth.init();
+
+            const unlockAudio = () => {
+                audioSynth.init();
+                if (audioSynth.ctx && audioSynth.ctx.state === 'suspended') {
+                    audioSynth.ctx.resume().catch(() => {});
+                }
+                window.removeEventListener('pointerdown', unlockAudio);
+                window.removeEventListener('keydown', unlockAudio);
+                window.removeEventListener('touchstart', unlockAudio);
+            };
+            window.addEventListener('pointerdown', unlockAudio, { passive: true });
+            window.addEventListener('keydown', unlockAudio);
+            window.addEventListener('touchstart', unlockAudio, { passive: true });
 
             // Render Loop — target 60 FPS with frame-time normalization.
             const targetFrameTime = 1000 / 60;

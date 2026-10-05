@@ -762,9 +762,9 @@
 
                     // Mode Collision Physics
                     if (this.mode === 'escape') {
-                        this.handleCircularBoundaryCollision(ball, true);
+                        this.handleCircularBoundaryCollision(ball, true, dtScale);
                     } else if (this.mode === 'exponential' || this.mode === 'web') {
-                        this.handleCircularBoundaryCollision(ball, false);
+                        this.handleCircularBoundaryCollision(ball, false, dtScale);
                     } else if (this.mode === 'destruction') {
                         this.handleDestructionRingsCollision(ball);
                         this.handleOuterWallBounds(ball);
@@ -776,7 +776,7 @@
                 this.updateUI();
             }
 
-            handleCircularBoundaryCollision(ball, isEscapeMode) {
+            handleCircularBoundaryCollision(ball, isEscapeMode, dtScale = 1) {
                 const dx = ball.x - this.center.x;
                 const dy = ball.y - this.center.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);

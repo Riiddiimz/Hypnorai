@@ -1150,16 +1150,33 @@
             });
 
             // Visual Switches
+            // Keep the settings panel at the same scroll position when toggling a switch.
+            // This prevents the hidden checkbox focus from jumping the Classic options to the top.
+            const settingsPanel = document.getElementById('classicOptions').parentElement;
+            const keepSettingsScrollPosition = (callback) => {
+                const scrollTop = settingsPanel.scrollTop;
+                callback();
+                requestAnimationFrame(() => {
+                    settingsPanel.scrollTop = scrollTop;
+                });
+            };
+
             document.getElementById('trailToggle').addEventListener('change', (e) => {
-                sim.enableTrail = e.target.checked;
+                keepSettingsScrollPosition(() => {
+                    sim.enableTrail = e.target.checked;
+                });
             });
 
             document.getElementById('particlesToggle').addEventListener('change', (e) => {
-                sim.enableParticles = e.target.checked;
+                keepSettingsScrollPosition(() => {
+                    sim.enableParticles = e.target.checked;
+                });
             });
 
             document.getElementById('shockwavesToggle').addEventListener('change', (e) => {
-                sim.enableShockwaves = e.target.checked;
+                keepSettingsScrollPosition(() => {
+                    sim.enableShockwaves = e.target.checked;
+                });
             });
 
             // Reset & Spawn Buttons

@@ -1,457 +1,976 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="fr" class="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070a12">
-<title>Hypnorai — Musical Physics</title>
-<style>
-:root{--bg:#060812;--panel:rgba(12,17,32,.78);--line:rgba(255,255,255,.1);--text:#f4f7ff;--muted:#8994ad;--accent:#6cf6ff;--accent2:#b86cff;--danger:#ff5470;--shadow:0 24px 70px rgba(0,0,0,.42)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#141b35 0,#060812 48%,#03040a 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-button,input,select{font:inherit}button{cursor:pointer}
-.app{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;padding:18px;max-width:1500px;margin:auto}
-.stage{min-width:0;display:flex;flex-direction:column;gap:12px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 30px rgba(108,246,255,.25);display:grid;place-items:center;color:#05070e;font-weight:900}.brand h1{font-size:18px;margin:0}.brand p{font-size:11px;color:var(--muted);margin:2px 0 0;text-transform:uppercase;letter-spacing:.16em}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:10px 13px;border-radius:11px;font-weight:700;transition:.2s}.btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.1)}.btn.primary{background:linear-gradient(135deg,var(--accent),#6c9dff);color:#05070e;border:0}.btn.danger{background:rgba(255,84,112,.12);color:#ff9aaa}
-.canvasWrap{position:relative;width:100%;height:min(78vh,900px);min-height:520px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#03050b;box-shadow:var(--shadow)}
-canvas{width:100%;height:100%;display:block}
-.hud{position:absolute;inset:0;pointer-events:none}.hud button,.hud .overlayControls{pointer-events:auto}.pill{position:absolute;top:14px;padding:7px 10px;border:1px solid var(--line);background:rgba(4,7,15,.6);backdrop-filter:blur(12px);border-radius:999px;font-size:11px;color:#c9d2e9}.status{left:14px}.audioState{right:14px}.centerMsg{display:none}.centerMsg .big,.centerMsg .small{display:none}
-.overlayControls{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:8px;padding:8px;border:1px solid var(--line);background:rgba(3,5,12,.68);backdrop-filter:blur(14px);border-radius:15px}
-.side{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px);border-radius:20px;padding:18px;box-shadow:var(--shadow);overflow:auto;max-height:calc(100vh - 36px)}
-.side h2{font-size:16px;margin:0 0 3px}.side .sub{font-size:12px;color:var(--muted);margin:0 0 18px}.group{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}.group:first-of-type{border-top:0;padding-top:0;margin-top:0}
-.row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0 7px}.row label{font-size:12px;color:#cdd5e8}.value{font-variant-numeric:tabular-nums;color:var(--accent);font-size:12px;font-weight:800}
-input[type=range]{width:100%;accent-color:#6cf6ff}select{width:100%;background:#0a0f1d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px}
-.check{display:flex;align-items:center;gap:9px;font-size:12px;color:#cdd5e8;margin:10px 0}.check input{accent-color:#6cf6ff}.canvasWrap{cursor:crosshair}.canvasWrap.dragging{cursor:grabbing}
-.audioBtn{width:100%;margin-top:12px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{padding:10px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.03)}.stat b{display:block;font-size:15px}.stat span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-@media(max-width:980px){.app{grid-template-columns:1fr;padding:10px}.side{max-height:none}.canvasWrap{height:70vh;min-height:480px}.topbar{align-items:flex-start}.brand p{display:none}}
-@media(max-width:560px){.canvasWrap{height:72vh;min-height:460px;border-radius:16px}.app{gap:10px}.side{padding:14px}.actions .btn{padding:8px 9px;font-size:12px}.overlayControls{bottom:10px}.overlayControls .btn{padding:8px 10px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satisfying Ball Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        panelBg: 'rgba(18, 24, 38, 0.85)',
+                        accentPink: '#ff2a85',
+                        accentCyan: '#00f2fe',
+                        accentPurple: '#7928ca'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #080b11;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 42, 133, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 42, 133, 0.8);
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6), 0 0 20px rgba(255, 42, 133, 0.4);
+        }
+        .glow-box {
+            box-shadow: 0 0 25px -5px rgba(121, 40, 202, 0.3);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
-<body>
-<div class="app">
-<main class="stage">
-  <div class="topbar">
-    <div class="brand"><div class="logo">H</div><div><h1>HYPNORAI</h1><p>Musical Physics Lab</p></div></div>
-    <div class="actions"><button class="btn" id="audioTop">🔊 Audio</button><button class="btn" id="fullscreen">⛶</button></div>
-  </div>
-  <div class="canvasWrap" id="canvasWrap">
-    <canvas id="game"></canvas>
-    <div class="hud">
-      <div class="pill status" id="status">PRÊT</div>
-      <div class="pill audioState" id="audioState">AUDIO OFF</div>
-      <div class="centerMsg" id="centerMsg" aria-hidden="true"><div class="big" id="centerBig">3</div><div class="small" id="centerSmall">GEL DANS</div></div>
-      <div class="overlayControls">
-        <button class="btn primary" id="play">▶ Démarrer</button>
-        <button class="btn" id="reset">↻ Reset</button>
-      </div>
-    </div>
-  </div>
-</main>
-<aside class="side">
-  <h2>Contrôles</h2><p class="sub">Modifie la simulation en temps réel.</p>
-  <div class="group">
-    <div class="row"><label>Direction de lâcher</label><span class="value" id="aimVal">0°</span></div>
-    <div id="aimPad" style="position:relative;width:100%;aspect-ratio:1/1;max-height:220px;border:1px solid var(--line);border-radius:14px;background:radial-gradient(circle,rgba(108,246,255,.06),rgba(255,255,255,.015));overflow:hidden;cursor:crosshair;touch-action:none;">
-      <div id="aimCross" style="position:absolute;left:50%;top:50%;width:2px;height:100%;background:rgba(108,246,255,.2);transform:translateX(-50%);"></div>
-      <div style="position:absolute;left:50%;top:50%;width:100%;height:2px;background:rgba(108,246,255,.2);transform:translateY(-50%);"></div>
-      <div id="aimLine" style="position:absolute;left:50%;top:50%;width:42%;height:2px;background:var(--accent);transform-origin:0 50%;box-shadow:0 0 12px var(--accent);"></div>
-      <div id="aimDot" style="position:absolute;left:50%;top:50%;width:12px;height:12px;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 14px var(--accent);"></div>
-      <div style="position:absolute;inset:10px;pointer-events:none;border:1px dashed rgba(255,255,255,.08);border-radius:50%;"></div>
-    </div>
-    <p class="hint" style="margin-bottom:0">Clique ou fais glisser dans le viseur pour choisir le point de départ de la boule.</p>
-  </div>
-  <div class="group">
-    <div class="row"><label>Gravité</label><span class="value" id="gravityVal"></span></div><input id="gravity" type="range" min="0" max="20" step=".1" value="9.8">
-    <div class="row"><label>Restitution</label><span class="value" id="bounceVal"></span></div><input id="bounce" type="range" min="0" max=".7" step=".01" value=".18">
-    <div class="row"><label>Gel / nouvelle boule</label><span class="value" id="freezeVal"></span></div><input id="freeze" type="range" min="1" max="10" step=".1" value="3">
-    <div class="row"><label>Vitesse de rotation</label><span class="value" id="rotationVal"></span></div><input id="rotation" type="range" min="-120" max="120" step="1" value="18"><label class="check"><input id="rotationEnabled" type="checkbox" checked> Rotation automatique</label>
-    <div class="row"><label>Ouverture</label><span class="value" id="gapVal"></span></div><input id="gap" type="range" min="10" max="90" step="1" value="32">
-    <div class="row"><label>Vitesse initiale</label><span class="value" id="speedVal"></span></div><input id="speed" type="range" min="0" max="10" step=".1" value="0">
-  </div>
-  <div class="group">
-    <div class="row"><label>Mélodie</label></div><select id="melody">
-      <option value="tetris">Tetris Theme</option><option value="rush">Rush E — motif</option><option value="mega">Megalovania — motif</option><option value="gym">Gymnopédie — motif</option><option value="penta">Pentatonique</option>
-    </select>
-    <div class="row"><label>Timbre</label></div><select id="instrument"><option value="piano">Piano</option><option value="neon">Synthé Néon 8-bit</option><option value="marimba">Marimba</option><option value="pluck">Pluck Arpégiateur</option></select>
-    <div class="row"><label>Thème</label></div><select id="theme"><option value="cyber">Neon Cyberpunk</option><option value="pastel">Pastel Soft</option><option value="gold">Dark Gold</option></select>
-    <label class="check"><input id="showTrails" type="checkbox" checked> Traînées lumineuses</label>
-    <label class="check"><input id="showGrid" type="checkbox" checked> Grille / ambiance</label>
-  </div>
-  <div class="group">
-    <div class="stats"><div class="stat"><b id="ballCount">0</b><span>Boules gelées</span></div><div class="stat"><b id="hits">0</b><span>Impacts</span></div><div class="stat"><b id="noteCount">0</b><span>Notes</span></div></div>
-    <button class="btn primary audioBtn" id="enableAudio">🎵 Activer l'Audio</button>
-    <p class="hint">Le navigateur bloque généralement l'audio avant une interaction. Clique sur ce bouton ou sur « Audio » avant de jouer.</p>
-  </div>
-</aside>
-</div>
+<body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden select-none">
 
-<script>
-"use strict";
+    <!-- Control Sidebar -->
+    <aside class="w-full md:w-80 lg:w-96 glass-panel flex flex-col z-10 border-b md:border-b-0 md:border-r border-slate-800 h-2/5 md:h-full shrink-0">
+        <!-- App Title / Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-accentPink to-accentCyan flex items-center justify-center text-white shadow-lg shadow-pink-500/20">
+                    <i class="fa-solid font-bold text-lg fa-basketball"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-cyan-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">BALL SIMULATOR</h1>
+                    <p class="text-xs text-slate-400">Satisfying Visuals & ASMR Audio</p>
+                </div>
+            </div>
+            <button id="audioInitBtn" class="px-3 py-1.5 text-xs bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition flex items-center gap-1.5 font-semibold">
+                <i class="fa-solid fa-volume-high"></i> Audio
+            </button>
+        </div>
 
-/* =========================================================
-   HYPNORAI — Musical Physics
-   Application autonome Canvas + Web Audio API.
-   ========================================================= */
+        <!-- Scrollable Settings -->
+        <div class="p-4 overflow-y-auto space-y-5 flex-1 text-sm">
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const wrap = document.getElementById("canvasWrap");
+            <!-- Mode Selector -->
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span><i class="fa-solid fa-gamepad text-pink-500 mr-1.5"></i> Game Mode</span>
+                </label>
+                <div class="grid grid-cols-2 gap-2" id="modeButtons">
+                    <button data-mode="escape" class="mode-btn px-3 py-2.5 rounded-xl border border-pink-500/50 bg-pink-500/10 text-white font-medium hover:bg-pink-500/20 transition flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-door-open text-pink-400"></i> Circular Escape
+                    </button>
+                    <button data-mode="exponential" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-clone text-cyan-400"></i> Ball Duplication
+                    </button>
+                    <button data-mode="destruction" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-compact-disc text-purple-400"></i> Ring Breaker
+                    </button>
+                    <button data-mode="web" class="mode-btn px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 font-medium hover:bg-slate-700/50 transition flex items-center gap-2 text-xs">
+                        <i class="fa-solid fa-draw-polygon text-yellow-400"></i> Rainbow Web
+                    </button>
+                </div>
+            </div>
 
-const $ = id => document.getElementById(id);
-const ui = {
-  gravity:$("gravity"), bounce:$("bounce"), freeze:$("freeze"), rotation:$("rotation"), rotationEnabled:$("rotationEnabled"),
-  gap:$("gap"), speed:$("speed"), melody:$("melody"), instrument:$("instrument"),
-  theme:$("theme"), showTrails:$("showTrails"), showGrid:$("showGrid"),
-  play:$("play"), reset:$("reset"), fullscreen:$("fullscreen"),
-  audioTop:$("audioTop"), enableAudio:$("enableAudio"), status:$("status"),
-  audioState:$("audioState"), centerMsg:$("centerMsg"), centerBig:$("centerBig"),
-  centerSmall:$("centerSmall"), ballCount:$("ballCount"), hits:$("hits"), noteCount:$("noteCount")
-};
+            <!-- Audio & Synth Controls -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span><i class="fa-solid fa-music text-cyan-400 mr-1.5"></i> Audio Synthesizer</span>
+                    <span id="scaleNoteDisplay" class="text-cyan-400 font-mono text-[10px]">C4 Major</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">Instrument</label>
+                        <select id="instSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="marimba">Marimba (Warm)</option>
+                            <option value="synth">Synthwave Lead</option>
+                            <option value="piano">Soft Piano</option>
+                            <option value="bell">Crystal Bell</option>
+                            <option value="chiptune">8-Bit Arcade</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">Scale</label>
+                        <select id="scaleSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="pentatonic">Pentatonic (Harmonic)</option>
+                            <option value="major">Major (Upbeat)</option>
+                            <option value="minor">Minor (Melancholic)</option>
+                            <option value="synthwave">Synthwave (Retro)</option>
+                            <option value="japanese">Insen (Mystical)</option>
+                        </select>
+                    </div>
+                </div>
 
-const THEMES = {
-  cyber:{accent:"#6cf6ff",accent2:"#b86cff",frozen:"#82dfff",bg:"#03050b",grid:"rgba(108,246,255,.06)"},
-  pastel:{accent:"#ff9bd5",accent2:"#9fc8ff",frozen:"#c8e8ff",bg:"#090911",grid:"rgba(255,180,220,.06)"},
-  gold:{accent:"#ffd166",accent2:"#ff8c42",frozen:"#ffe7a0",bg:"#080705",grid:"rgba(255,209,102,.055)"}
-};
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Audio Volume</span>
+                        <span id="volumeValue" class="text-slate-200">80%</span>
+                    </div>
+                    <input id="volumeSlider" type="range" min="0" max="100" value="80" class="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
 
-const MELODIES = {
-  tetris:[659,494,523,587,523,494,440,440,523,659,587,523,494,523,587,659,523,440,440],
-  rush:[330,330,392,440,392,330,262,294,330,392,440,494,440,392,330,294,262],
-  mega:[294,294,587,440,415,392,349,349,392,415,440,587,659,587,440,392],
-  gym:[196,220,246.94,293.66,246.94,220,196,174.61,196,220,246.94,293.66,329.63,293.66,246.94],
-  penta:[261.63,293.66,329.63,392,440,523.25,587.33,659.25,587.33,523.25,440,392,329.63,293.66]
-};
+            <!-- Physics Tuning -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-sliders text-purple-400 mr-1.5"></i> Physics & Balls
+                </div>
 
-class AudioEngine {
-  constructor(){this.ctx=null;this.master=null;this.enabled=false;this.noteIndex=0;this.noteCount=0}
-  async enable(){
-    if(!this.ctx){
-      this.ctx=new (window.AudioContext||window.webkitAudioContext)();
-      this.master=this.ctx.createGain();
-      this.master.gain.value=.18;
-      this.master.connect(this.ctx.destination);
-    }
-    if(this.ctx.state==="suspended") await this.ctx.resume();
-    this.enabled=true;
-    ui.audioState.textContent="AUDIO ON";
-    ui.audioState.style.color="var(--accent)";
-  }
-  async toggle(){if(!this.enabled){await this.enable()}else{this.enabled=false;ui.audioState.textContent="AUDIO OFF";ui.audioState.style.color=""}}
-  playNext(){
-    if(!this.enabled||!this.ctx)return;
-    const seq=MELODIES[ui.melody.value]||MELODIES.penta;
-    const f=seq[this.noteIndex++%seq.length];
-    this.noteCount++;ui.noteCount.textContent=this.noteCount;
-    const now=this.ctx.currentTime;
-    const osc=this.ctx.createOscillator();
-    const gain=this.ctx.createGain();
-    const filter=this.ctx.createBiquadFilter();
-    const type=ui.instrument.value;
-    osc.type=type==="neon"?"square":type==="marimba"?"triangle":type==="pluck"?"sawtooth":"sine";
-    osc.frequency.setValueAtTime(f,now);
-    if(type==="pluck") osc.detune.setValueAtTime(7,now);
-    filter.type="lowpass";filter.frequency.setValueAtTime(type==="neon"?3600:6200,now);
-    filter.Q.value=type==="neon"?1.4:0.6;
-    const a=type==="pluck"?.004:.012;
-    const d=type==="marimba"?.16:.11;
-    const s=type==="piano"?.22:.10;
-    const r=type==="marimba"?.42:.24;
-    gain.gain.setValueAtTime(.0001,now);
-    gain.gain.exponentialRampToValueAtTime(.75,now+a);
-    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,s),now+a+d);
-    gain.gain.setValueAtTime(Math.max(.0002,s),now+a+d+.035);
-    gain.gain.exponentialRampToValueAtTime(.0001,now+a+d+.035+r);
-    osc.connect(filter);filter.connect(gain);gain.connect(this.master);
-    osc.start(now);osc.stop(now+a+d+.04+r+.03);
-  }
-}
-const audio=new AudioEngine();
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Gravity</span>
+                        <span id="gravityVal" class="text-slate-200">0.20</span>
+                    </div>
+                    <input id="gravitySlider" type="range" min="0" max="1" step="0.02" value="0.2" class="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
 
-class ParticleSystem {
-  constructor(){this.items=[]}
-  burst(x,y,color,count=14,power=1){
-    for(let i=0;i<count;i++){
-      const a=Math.random()*Math.PI*2, s=(80+Math.random()*190)*power;
-      this.items.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.5,max:.85,size:1+Math.random()*3,color});
-    }
-  }
-  ring(x,y,color){
-    this.items.push({ring:true,x,y,life:.34,max:.34,size:5,color});
-  }
-  update(dt){
-    for(const p of this.items){p.life-=dt;if(p.ring){p.size+=280*dt}else{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=130*dt;p.vx*=.992;p.vy*=.992}}
-    this.items=this.items.filter(p=>p.life>0);
-  }
-  draw(){
-    ctx.save();
-    for(const p of this.items){
-      const a=Math.max(0,p.life/p.max);
-      ctx.globalAlpha=a;
-      if(p.ring){
-        ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.stroke();
-      }else{
-        ctx.fillStyle=p.color;ctx.shadowBlur=12;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size*a+.5,0,Math.PI*2);ctx.fill();
-      }
-    }
-    ctx.restore();
-  }
-}
-const particles=new ParticleSystem();
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Bounce Bounciness (Restitution)</span>
+                        <span id="bounceVal" class="text-slate-200">1.00</span>
+                    </div>
+                    <input id="bounceSlider" type="range" min="0.8" max="1.05" step="0.01" value="1.0" class="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
 
-class Ball {
-  constructor(x,y,vx,vy,r=8){this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.r=r;this.frozen=false;this.trail=[]}
-  update(dt){if(this.frozen)return;
-    // Gravity is deliberately scaled to screen space: the ball accelerates from rest.
-    const gravityPx=game.gravity*95;
-    this.vy+=gravityPx*dt;
-    this.x+=this.vx*dt;
-    this.y+=this.vy*dt;
-  }
-  draw(){
-    const t=game.theme;
-    ctx.save();
-    if(game.showTrails&&this.trail.length>1){
-      ctx.beginPath();ctx.moveTo(this.trail[0].x,this.trail[0].y);
-      for(let i=1;i<this.trail.length;i++)ctx.lineTo(this.trail[i].x,this.trail[i].y);
-      ctx.strokeStyle=this.frozen?t.frozen:t.accent;ctx.globalAlpha=this.frozen?.12:.22;ctx.lineWidth=3;ctx.stroke();
-    }
-    const g=ctx.createRadialGradient(this.x-this.r*.35,this.y-this.r*.35,1,this.x,this.y,this.r*2.4);
-    g.addColorStop(0,"#fff");g.addColorStop(.25,this.frozen?t.frozen:t.accent);g.addColorStop(1,"transparent");
-    ctx.globalAlpha=this.frozen?.95:1;ctx.fillStyle=g;ctx.shadowBlur=this.frozen?22:30;ctx.shadowColor=this.frozen?t.frozen:t.accent;
-    ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=1;ctx.fillStyle=this.frozen?"rgba(255,255,255,.55)":"#fff";ctx.beginPath();ctx.arc(this.x-this.r*.3,this.y-this.r*.3,this.r*.2,0,Math.PI*2);ctx.fill();
-    ctx.restore();
-  }
-}
+                <div>
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Ball Radius</span>
+                        <span id="radiusVal" class="text-slate-200">12px</span>
+                    </div>
+                    <input id="radiusSlider" type="range" min="6" max="25" value="12" class="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
 
-class Arena {
-  constructor(){this.rotation=0;this.cx=0;this.cy=0;this.radius=0}
-  resize(w,h){this.cx=w/2;this.cy=h/2;this.radius=Math.min(w,h)*.38}
-  update(dt){if(game.rotationEnabled&&!game.draggingGap)this.rotation+=game.rotation*Math.PI/180*dt}
-  gapContains(angle){
-    const local=normAngle(angle-this.rotation);
-    return Math.abs(local)<=game.gap*Math.PI/360;
-  }
-  wallCollision(ball){
-    const dx=ball.x-this.cx,dy=ball.y-this.cy;
-    const dist=Math.hypot(dx,dy), limit=this.radius-ball.r;
-    if(dist<=limit)return false;
-    const ang=Math.atan2(dy,dx);
-    if(this.gapContains(ang)){
-      return "escape";
-    }
-    const nx=dx/(dist||1),ny=dy/(dist||1);
-    ball.x=this.cx+nx*limit;ball.y=this.cy+ny*limit;
-    const vn=ball.vx*nx+ball.vy*ny;
-    if(vn<=0)return false;
-    const e=game.bounce;
-    // Low restitution + tangential damping = heavy ball, not a rubber ball.
-    ball.vx-= (1+e)*vn*nx;
-    ball.vy-= (1+e)*vn*ny;
-    const tangentX=-ny,tangentY=nx;
-    const vt=ball.vx*tangentX+ball.vy*tangentY;
-    const friction=.72;
-    ball.vx-=vt*friction*tangentX;
-    ball.vy-=vt*friction*tangentY;
-    return true;
-  }
-  draw(){
-    const t=game.theme;
-    ctx.save();
-    ctx.translate(this.cx,this.cy);
-    if(game.showGrid){
-      ctx.strokeStyle=t.grid;ctx.lineWidth=1;
-      for(let r=this.radius*.25;r<this.radius;r+=this.radius*.25){ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke()}
-      ctx.beginPath();ctx.moveTo(-this.radius,0);ctx.lineTo(this.radius,0);ctx.moveTo(0,-this.radius);ctx.lineTo(0,this.radius);ctx.stroke();
-    }
-    const gap=game.gap*Math.PI/360;
-    const start=this.rotation+gap,end=this.rotation+Math.PI*2-gap;
-    ctx.shadowBlur=22;ctx.shadowColor=t.accent;ctx.strokeStyle=t.accent;ctx.lineWidth=4;ctx.lineCap="round";
-    ctx.beginPath();ctx.arc(0,0,this.radius,start,end);ctx.stroke();
-    ctx.shadowBlur=0;ctx.strokeStyle=t.accent2;ctx.globalAlpha=.28;ctx.lineWidth=12;
-    ctx.beginPath();ctx.arc(0,0,this.radius,start,end);ctx.stroke();
-    ctx.globalAlpha=1;
-    ctx.strokeStyle=t.accent2;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,this.radius,start,end);ctx.stroke();
-    ctx.restore();
-    // opening markers
-    const ga=this.rotation;
-    for(const s of [-1,1]){
-      const a=ga+s*gap,x=this.cx+Math.cos(a)*this.radius,y=this.cy+Math.sin(a)*this.radius;
-      ctx.save();ctx.fillStyle=t.accent2;ctx.shadowBlur=18;ctx.shadowColor=t.accent2;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();ctx.restore();
-    }
-  }
-}
-const arena=new Arena();
+            <!-- Visual Toggles -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2.5">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 mr-1.5"></i> Visual FX
+                </div>
+                
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-xs text-slate-300">Glow & Trail Effect</span>
+                    <input type="checkbox" id="trailToggle" checked class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 relative"></div>
+                </label>
 
-class Game {
-  constructor(){
-    this.running=false;this.paused=false;this.gravity=9.8;this.bounce=.18;this.freezeTime=3;this.rotation=18;this.gap=32;this.speed=0;this.rotationEnabled=true;this.draggingGap=false;
-    this.theme=THEMES.cyber;this.showTrails=true;this.showGrid=true;this.aimAngle=-Math.PI/2;this.frozen=[];this.active=null;this.timer=this.freezeTime;
-    this.impactCount=0;this.noteCount=0;this.last=performance.now();this.escapeTimer=0;this.won=false;this.spawnAngle=-Math.PI/4;
-  }
-  resize(){const d=Math.min(devicePixelRatio||1,2),r=wrap.getBoundingClientRect();canvas.width=Math.floor(r.width*d);canvas.height=Math.floor(r.height*d);canvas.style.width=r.width+"px";canvas.style.height=r.height+"px";ctx.setTransform(d,0,0,d,0,0);this.w=r.width;this.h=r.height;arena.resize(this.w,this.h)}
-  spawn(){
-    // The ball is dropped from rest near the top of the bowl.
-    // No artificial launch velocity: gravity creates the motion immediately.
-    const dropRadius=arena.radius*.72;
-    const dropX=arena.cx+Math.cos(this.aimAngle)*dropRadius;
-    const dropY=arena.cy+Math.sin(this.aimAngle)*dropRadius;
-    this.active=new Ball(dropX,dropY,0,0,9);
-    this.timer=this.freezeTime;this.won=false;ui.centerMsg.classList.add("show");ui.centerSmall.textContent="GEL DANS";
-  }
-  reset(){
-    this.frozen=[];this.impactCount=0;this.noteCount=0;audio.noteIndex=0;audio.noteCount=0;this.escapeTimer=0;this.won=false;
-    ui.hits.textContent="0";ui.noteCount.textContent="0";ui.ballCount.textContent="0";ui.status.textContent="PRÊT";ui.play.textContent="▶ Démarrer";
-    this.running=false;this.paused=false;this.spawn();
-    this.active.trail=[];
-  }
-  start(){
-    if(this.won){this.reset()}
-    this.running=true;this.paused=false;ui.play.textContent="Ⅱ Pause";ui.status.textContent="EN JEU";
-  }
-  pause(){this.paused=!this.paused;ui.play.textContent=this.paused?"▶ Reprendre":"Ⅱ Pause";ui.status.textContent=this.paused?"PAUSE":"EN JEU"}
-  impact(x,y){
-    this.impactCount++;ui.hits.textContent=this.impactCount;
-    audio.playNext();particles.ring(x,y,this.theme.accent);particles.burst(x,y,this.theme.accent,10,.75);
-  }
-  freezeActive(){
-    if(!this.active)return;
-    this.active.vx=0;this.active.vy=0;this.active.frozen=true;
-    this.frozen.push(this.active);ui.ballCount.textContent=this.frozen.length;
-    particles.ring(this.active.x,this.active.y,this.theme.frozen);particles.burst(this.active.x,this.active.y,this.theme.frozen,22,.65);
-    this.spawn();
-  }
-  circleCollisions(){
-    const b=this.active;if(!b||b.frozen)return;
-    for(const o of this.frozen){
-      let dx=b.x-o.x,dy=b.y-o.y,dist=Math.hypot(dx,dy),min=b.r+o.r;
-      if(dist>=min)continue;
-      if(dist<.0001){dx=1;dy=0;dist=1}
-      const nx=dx/dist,ny=dy/dist;
-      // Push the active ball completely outside the frozen ball.
-      const penetration=min-dist;
-      b.x+=nx*(penetration+.08);b.y+=ny*(penetration+.08);
-      const vn=b.vx*nx+b.vy*ny;
-      if(vn<0){
-        const e=this.bounce;
-        b.vx-=(1+e)*vn*nx;b.vy-=(1+e)*vn*ny;
-        this.impact((b.x+o.x)/2,(b.y+o.y)/2);
-      }
-    }
-  }
-  step(dt){
-    if(!this.running||this.paused)return;
-    arena.update(dt);
-    if(this.won){this.escapeTimer-=dt;if(this.escapeTimer<=0)this.reset();return}
-    this.timer-=dt;
-    ui.centerBig.textContent=Math.max(0,Math.ceil(this.timer)).toString();
-    if(this.timer<=0){this.freezeActive();return}
-    const b=this.active;
-    b.update(dt);
-    b.trail.push({x:b.x,y:b.y});if(b.trail.length>22)b.trail.shift();
-    const wall=arena.wallCollision(b);
-    if(wall==="escape"){this.win();return}
-    if(wall===true)this.impact(b.x,b.y);
-    this.circleCollisions();
-  }
-  win(){
-    this.won=true;this.escapeTimer=2;ui.status.textContent="ÉCHAPPÉE !";ui.centerBig.textContent="✓";ui.centerSmall.textContent="ÉCHAPPÉE !";
-    particles.burst(this.active.x,this.active.y,this.theme.accent,130,1.8);
-    particles.burst(arena.cx,arena.cy,this.theme.accent2,90,1.4);
-    if(this.active){this.active.vx*=1.7;this.active.vy*=1.7}
-  }
-  draw(){
-    ctx.fillStyle=this.theme.bg;ctx.fillRect(0,0,this.w,this.h);
-    if(this.showGrid){
-      ctx.save();ctx.strokeStyle=this.theme.grid;ctx.lineWidth=1;const step=42;
-      for(let x=0;x<this.w;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,this.h);ctx.stroke()}
-      for(let y=0;y<this.h;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(this.w,y);ctx.stroke()}
-      ctx.restore();
-    }
-    const glow=ctx.createRadialGradient(arena.cx,arena.cy,0,arena.cx,arena.cy,arena.radius*1.15);
-    glow.addColorStop(0,"rgba(108,246,255,.06)");glow.addColorStop(1,"transparent");ctx.fillStyle=glow;ctx.beginPath();ctx.arc(arena.cx,arena.cy,arena.radius*1.15,0,Math.PI*2);ctx.fill();
-    // Small, translucent countdown number: part of the background, behind the physics.
-    if(this.running&&!this.won&&this.timer>0){
-      ctx.save();
-      ctx.globalAlpha=.14;
-      ctx.fillStyle=this.theme.accent;
-      ctx.font="900 42px Inter,ui-sans-serif,system-ui,sans-serif";
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      ctx.fillText(Math.max(0,Math.ceil(this.timer)),arena.cx,arena.cy);
-      ctx.restore();
-    }
-    arena.draw();
-    for(const b of this.frozen)b.draw();
-    if(this.active&&!this.active.frozen)this.active.draw();
-    particles.draw();
-    if(!this.running&&!this.won){
-      ctx.save();ctx.globalAlpha=.8;ctx.fillStyle=this.theme.accent;ctx.shadowBlur=18;ctx.shadowColor=this.theme.accent;
-      ctx.beginPath();ctx.arc(arena.cx,arena.cy,3,0,Math.PI*2);ctx.fill();ctx.restore();
-    }
-  }
-  loop(now){
-    const dt=Math.min(.033,(now-this.last)/1000);this.last=now;
-    this.step(dt);particles.update(dt);this.draw();requestAnimationFrame(t=>this.loop(t));
-  }
-}
-const game=new Game();
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-xs text-slate-300">Particle Explosions</span>
+                    <input type="checkbox" id="particlesToggle" checked class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 relative"></div>
+                </label>
 
-const aimPad=$("aimPad"), aimLine=$("aimLine"), aimDot=$("aimDot"), aimVal=$("aimVal");
-function updateAim(angle){
-  game.aimAngle=angle;
-  const deg=((angle*180/Math.PI)+90+360)%360-180;
-  aimVal.textContent=Math.round(deg)+"°";
-  aimLine.style.transform="rotate("+angle+"rad)";
-  const x=50+42*Math.cos(angle), y=50+42*Math.sin(angle);
-  aimDot.style.left=x+"%"; aimDot.style.top=y+"%";
-  game.spawnAngle=angle;
-  if(!game.running) game.spawn();
-}
-function aimFromPointer(e){
-  const r=aimPad.getBoundingClientRect();
-  const x=e.clientX-r.left-r.width/2, y=e.clientY-r.top-r.height/2;
-  if(Math.hypot(x,y)<8)return;
-  updateAim(Math.atan2(y,x));
-}
-aimPad.addEventListener("pointerdown",e=>{aimPad.setPointerCapture(e.pointerId);aimFromPointer(e)});
-aimPad.addEventListener("pointermove",e=>{if(e.buttons)aimFromPointer(e)});
-updateAim(game.aimAngle);
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-xs text-slate-300">Expanding Shockwaves</span>
+                    <input type="checkbox" id="shockwavesToggle" checked class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 relative"></div>
+                </label>
+            </div>
 
-function normAngle(a){while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;return a}
-function bindRange(id,format,prop){
-  const el=ui[id],out=$(id+"Val");
-  const update=()=>{game[prop]=Number(el.value);out.textContent=format(Number(el.value))};
-  el.addEventListener("input",update);update();
-}
-bindRange("gravity",v=>v.toFixed(1)+" m/s²","gravity");
-bindRange("bounce",v=>v.toFixed(2),"bounce");
-bindRange("freeze",v=>v.toFixed(1)+" s","freezeTime");
-bindRange("rotation",v=>v.toFixed(0)+"°/s","rotation");
-bindRange("gap",v=>v.toFixed(0)+"°","gap");
-bindRange("speed",v=>v.toFixed(1),"speed");
+        </div>
 
-ui.theme.addEventListener("change",()=>{game.theme=THEMES[ui.theme.value]});
-ui.showTrails.addEventListener("change",()=>game.showTrails=ui.showTrails.checked);
-ui.showGrid.addEventListener("change",()=>game.showGrid=ui.showGrid.checked);
-ui.rotationEnabled.addEventListener("change",()=>{game.rotationEnabled=ui.rotationEnabled.checked});
-ui.freeze.addEventListener("change",()=>{game.freezeTime=Number(ui.freeze.value)});
-ui.play.addEventListener("click",async()=>{if(!audio.enabled)await audio.enable();game.running?game.pause():game.start()});
-ui.reset.addEventListener("click",()=>game.reset());
-ui.enableAudio.addEventListener("click",()=>audio.toggle());
-ui.audioTop.addEventListener("click",()=>audio.toggle());
-ui.fullscreen.addEventListener("click",async()=>{if(!document.fullscreenElement)await wrap.requestFullscreen?.();else await document.exitFullscreen?.()});
-wrap.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;if(!audio.enabled)audio.enable();const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx);game.draggingGap=true;wrap.classList.add("dragging");try{wrap.setPointerCapture(e.pointerId)}catch{}});
-wrap.addEventListener("pointermove",e=>{if(!game.draggingGap)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;arena.rotation=Math.atan2(y-arena.cy,x-arena.cx)});
-const stopGapDrag=e=>{if(!game.draggingGap)return;game.draggingGap=false;wrap.classList.remove("dragging");try{wrap.releasePointerCapture(e.pointerId)}catch{}};
-wrap.addEventListener("pointerup",stopGapDrag);
-wrap.addEventListener("pointercancel",stopGapDrag);
+        <!-- Action Buttons Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/80 flex gap-2">
+            <button id="resetBtn" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-xl font-bold shadow-lg shadow-pink-500/20 active:scale-95 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Reset Simulation
+            </button>
+            <button id="spawnBallBtn" class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-xl font-bold border border-slate-700 active:scale-95 transition flex items-center justify-center" title="Add Ball">
+                <i class="fa-solid fa-plus text-base"></i>
+            </button>
+        </div>
+    </aside>
 
-window.addEventListener("resize",()=>game.resize());
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&game.running&&!game.paused)game.pause()});
+    <!-- Simulation Viewport -->
+    <main class="flex-1 relative bg-black flex items-center justify-center overflow-hidden h-3/5 md:h-full">
+        <!-- Overlay Stats -->
+        <div class="absolute top-4 left-4 z-10 flex gap-3 text-xs font-mono">
+            <div class="px-3 py-1.5 rounded-lg glass-panel text-slate-300 flex items-center gap-2 border border-slate-800">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>FPS: <strong id="fpsCounter" class="text-white">60</strong></span>
+            </div>
+            <div class="px-3 py-1.5 rounded-lg glass-panel text-slate-300 flex items-center gap-2 border border-slate-800">
+                <i class="fa-solid fa-bowling-ball text-pink-400"></i>
+                <span>Balls: <strong id="ballCounter" class="text-white">1</strong></span>
+            </div>
+            <div class="px-3 py-1.5 rounded-lg glass-panel text-slate-300 flex items-center gap-2 border border-slate-800">
+                <i class="fa-solid fa-bullseye text-cyan-400"></i>
+                <span>Bounces: <strong id="bounceCounter" class="text-white">0</strong></span>
+            </div>
+        </div>
 
-game.resize();game.reset();requestAnimationFrame(t=>game.loop(t));
-</script>
+        <!-- Instructions Overlay -->
+        <div id="clickHint" class="absolute bottom-6 z-10 text-xs text-slate-400 glass-panel px-4 py-2 rounded-full border border-slate-800/80 pointer-events-none transition-opacity duration-500 flex items-center gap-2">
+            <i class="fa-solid fa-hand-pointer text-pink-400 animate-bounce"></i> Click anywhere on canvas to launch a ball or trigger sound
+        </div>
+
+        <!-- Main Canvas -->
+        <canvas id="simCanvas" class="w-full h-full cursor-pointer block"></canvas>
+    </main>
+
+    <script>
+        // Web Audio Synthesizer Engine
+        class AudioSynth {
+            constructor() {
+                this.ctx = null;
+                this.volume = 0.8;
+                this.instrument = 'marimba';
+                this.scaleName = 'pentatonic';
+                this.scales = {
+                    pentatonic: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00], // C D E G A
+                    major: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25], // C Major
+                    minor: [261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 587.33, 622.25], // C Minor
+                    synthwave: [196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25], // Synthwave scale
+                    japanese: [261.63, 277.18, 349.23, 392.00, 415.30, 523.25, 554.37, 698.46, 783.99, 830.61]  // Insen scale
+                };
+                this.noteIndex = 0;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playBounceSound(velocitySq = 100) {
+                if (!this.ctx) return;
+
+                const scale = this.scales[this.scaleName] || this.scales.pentatonic;
+                const freq = scale[this.noteIndex % scale.length];
+                this.noteIndex = (this.noteIndex + 1) % scale.length;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                // Dynamic gain based on impact velocity
+                const normalizedVol = Math.min(Math.max(Math.sqrt(velocitySq) / 25, 0.2), 1) * this.volume;
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.frequency.setValueAtTime(freq, now);
+
+                // Sound Synthesis Profiles
+                switch (this.instrument) {
+                    case 'marimba':
+                        osc.type = 'sine';
+                        gain.gain.setValueAtTime(normalizedVol, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                        break;
+                    case 'synth':
+                        osc.type = 'sawtooth';
+                        // Lowpass filter for synth warmth
+                        const filter = this.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(1200, now);
+                        filter.frequency.exponentialRampToValueAtTime(200, now + 0.4);
+                        osc.disconnect();
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        
+                        gain.gain.setValueAtTime(normalizedVol * 0.5, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                        break;
+                    case 'piano':
+                        osc.type = 'triangle';
+                        gain.gain.setValueAtTime(normalizedVol * 0.8, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                        break;
+                    case 'bell':
+                        osc.type = 'sine';
+                        // Add overtone for metallic resonance
+                        const overtone = this.ctx.createOscillator();
+                        const overtoneGain = this.ctx.createGain();
+                        overtone.type = 'sine';
+                        overtone.frequency.setValueAtTime(freq * 2.76, now);
+                        overtoneGain.gain.setValueAtTime(normalizedVol * 0.3, now);
+                        overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                        overtone.connect(overtoneGain);
+                        overtoneGain.connect(this.ctx.destination);
+                        overtone.start(now);
+                        overtone.stop(now + 0.5);
+
+                        gain.gain.setValueAtTime(normalizedVol, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                        break;
+                    case 'chiptune':
+                        osc.type = 'square';
+                        gain.gain.setValueAtTime(normalizedVol * 0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                        break;
+                }
+
+                osc.start(now);
+                osc.stop(now + 0.8);
+            }
+        }
+
+        const audioSynth = new AudioSynth();
+
+        // Particle Class for Visual Explosions
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 4 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.radius = Math.random() * 3 + 1.5;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.03 + 0.015;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(this.alpha, 0);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Shockwave Ring Class
+        class Shockwave {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = 2;
+                this.maxRadius = 45;
+                this.alpha = 0.9;
+            }
+
+            update() {
+                this.radius += 2.5;
+                this.alpha -= 0.03;
+            }
+
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = Math.max(this.alpha, 0);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Ball Physics Entity
+        class Ball {
+            constructor(x, y, vx, vy, radius, hue) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.radius = radius;
+                this.hue = hue || Math.floor(Math.random() * 360);
+                this.trail = [];
+                this.maxTrail = 18;
+            }
+
+            get color() {
+                return `hsl(${this.hue}, 100%, 65%)`;
+            }
+
+            update(gravity) {
+                this.vy += gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Save trail positions
+                this.trail.push({ x: this.x, y: this.y, hue: this.hue });
+                if (this.trail.length > this.maxTrail) {
+                    this.trail.shift();
+                }
+
+                // Cycle hue slowly for satisfying rainbow color shifts
+                this.hue = (this.hue + 0.3) % 360;
+            }
+
+            draw(ctx, enableTrail) {
+                // Draw Glowing Trail
+                if (enableTrail && this.trail.length > 1) {
+                    for (let i = 0; i < this.trail.length - 1; i++) {
+                        const p1 = this.trail[i];
+                        const p2 = this.trail[i + 1];
+                        const alpha = (i / this.trail.length) * 0.6;
+
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `hsla(${p1.hue}, 100%, 60%, ${alpha})`;
+                        ctx.lineWidth = (i / this.trail.length) * (this.radius * 1.5);
+                        ctx.lineCap = 'round';
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw Main Ball with Radial Glow
+                ctx.save();
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                // Inner specular highlight
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.35, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        class Simulation {
+            constructor() {
+                this.canvas = document.getElementById('simCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.balls = [];
+                this.particles = [];
+                this.shockwaves = [];
+                
+                // Configurable parameters
+                this.mode = 'escape'; // 'escape', 'exponential', 'destruction', 'web'
+                this.gravity = 0.2;
+                this.bounciness = 1.0;
+                this.ballRadius = 12;
+                this.enableTrail = true;
+                this.enableParticles = true;
+                this.enableShockwaves = true;
+
+                // Simulation Stats
+                this.totalBounces = 0;
+                this.fps = 60;
+                this.lastTime = performance.now();
+                this.frameCount = 0;
+
+                // Mode Specific State
+                this.boundaryRadius = 0;
+                this.center = { x: 0, y: 0 };
+                this.escapeGapAngle = 0; // Top opening angle for Escape Mode
+                this.escapeGapSize = Math.PI / 4; // Gap arc size
+                this.escapeCircleRadius = 0;
+
+                // Destruction Mode Blocks
+                this.ringBlocks = [];
+
+                // Rainbow Web Canvas persistent trail
+                this.webCanvas = document.createElement('canvas');
+                this.webCtx = this.webCanvas.getContext('2d');
+
+                this.resize();
+                this.initMode();
+                this.bindEvents();
+            }
+
+            resize() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+                this.center = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+                this.boundaryRadius = Math.min(this.canvas.width, this.canvas.height) * 0.42;
+
+                this.webCanvas.width = this.canvas.width;
+                this.webCanvas.height = this.canvas.height;
+
+                if (this.mode === 'destruction') {
+                    this.setupDestructionRings();
+                }
+            }
+
+            initMode() {
+                this.balls = [];
+                this.particles = [];
+                this.shockwaves = [];
+                this.totalBounces = 0;
+                this.webCtx.clearRect(0, 0, this.webCanvas.width, this.webCanvas.height);
+
+                this.escapeCircleRadius = this.boundaryRadius;
+                
+                // Add Initial Ball
+                this.spawnBall(this.center.x, this.center.y - 50, (Math.random() - 0.5) * 8, Math.random() * 4 - 2);
+
+                if (this.mode === 'destruction') {
+                    this.setupDestructionRings();
+                }
+            }
+
+            spawnBall(x, y, vx, vy) {
+                if (this.balls.length >= 120) return; // Cap performance limit
+                vx = vx || (Math.random() - 0.5) * 8;
+                vy = vy || (Math.random() - 0.5) * 8;
+                this.balls.push(new Ball(x, y, vx, vy, this.ballRadius, Math.random() * 360));
+                this.updateUI();
+            }
+
+            setupDestructionRings() {
+                this.ringBlocks = [];
+                const ringCount = 5;
+                const ringSpacing = 28;
+
+                for (let r = 0; r < ringCount; r++) {
+                    const radius = this.boundaryRadius - (r * ringSpacing);
+                    const blocksInRing = 16 + r * 6;
+                    const angleStep = (Math.PI * 2) / blocksInRing;
+
+                    for (let i = 0; i < blocksInRing; i++) {
+                        const startAngle = i * angleStep;
+                        const endAngle = (i + 1) * angleStep;
+                        this.ringBlocks.push({
+                            ringRadius: radius,
+                            startAngle: startAngle,
+                            endAngle: endAngle,
+                            hue: (r * 50 + i * 10) % 360,
+                            active: true
+                        });
+                    }
+                }
+            }
+
+            addEffects(x, y, color) {
+                if (this.enableParticles) {
+                    for (let i = 0; i < 8; i++) {
+                        this.particles.push(new Particle(x, y, color));
+                    }
+                }
+                if (this.enableShockwaves) {
+                    this.shockwaves.push(new Shockwave(x, y, color));
+                }
+            }
+
+            update() {
+                // Update FPS Counter
+                const now = performance.now();
+                this.frameCount++;
+                if (now - this.lastTime >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastTime = now;
+                    document.getElementById('fpsCounter').textContent = this.fps;
+                }
+
+                // Rotate Escape Mode opening slowly
+                if (this.mode === 'escape') {
+                    this.escapeGapAngle += 0.005;
+                }
+
+                // Update Shockwaves
+                for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+                    this.shockwaves[i].update();
+                    if (this.shockwaves[i].alpha <= 0) this.shockwaves.splice(i, 1);
+                }
+
+                // Update Particles
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    this.particles[i].update();
+                    if (this.particles[i].alpha <= 0) this.particles.splice(i, 1);
+                }
+
+                // Update Balls & Collisions
+                for (let bIndex = this.balls.length - 1; bIndex >= 0; bIndex--) {
+                    const ball = this.balls[bIndex];
+                    ball.update(this.gravity);
+
+                    // Web Trail Modepersistent drawing
+                    if (this.mode === 'web') {
+                        this.webCtx.beginPath();
+                        if (ball.trail.length > 1) {
+                            const p1 = ball.trail[ball.trail.length - 2];
+                            const p2 = ball.trail[ball.trail.length - 1];
+                            this.webCtx.moveTo(p1.x, p1.y);
+                            this.webCtx.lineTo(p2.x, p2.y);
+                            this.webCtx.strokeStyle = ball.color;
+                            this.webCtx.lineWidth = 1.5;
+                            this.webCtx.globalAlpha = 0.4;
+                            this.webCtx.stroke();
+                        }
+                    }
+
+                    // Mode Collision Physics
+                    if (this.mode === 'escape') {
+                        this.handleCircularBoundaryCollision(ball, true);
+                    } else if (this.mode === 'exponential' || this.mode === 'web') {
+                        this.handleCircularBoundaryCollision(ball, false);
+                    } else if (this.mode === 'destruction') {
+                        this.handleDestructionRingsCollision(ball);
+                        this.handleOuterWallBounds(ball);
+                    }
+                }
+
+                this.updateUI();
+            }
+
+            handleCircularBoundaryCollision(ball, isEscapeMode) {
+                const dx = ball.x - this.center.x;
+                const dy = ball.y - this.center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const currentRadius = isEscapeMode ? this.escapeCircleRadius : this.boundaryRadius;
+
+                if (dist + ball.radius >= currentRadius) {
+                    // Check if ball escapes through gap
+                    if (isEscapeMode) {
+                        let ballAngle = Math.atan2(dy, dx);
+                        if (ballAngle < 0) ballAngle += Math.PI * 2;
+
+                        let normGapAngle = this.escapeGapAngle % (Math.PI * 2);
+                        if (normGapAngle < 0) normGapAngle += Math.PI * 2;
+
+                        let angleDiff = Math.abs(ballAngle - normGapAngle);
+                        if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+
+                        // Ball Escaped! Reset or Shrink Circle
+                        if (angleDiff < this.escapeGapSize / 2) {
+                            if (dist > currentRadius + ball.radius * 2) {
+                                // Respawn in center
+                                ball.x = this.center.x;
+                                ball.y = this.center.y;
+                                ball.vx = (Math.random() - 0.5) * 6;
+                                ball.vy = -4;
+                                this.addEffects(this.center.x, this.center.y, '#00f2fe');
+                            }
+                            return;
+                        }
+                    }
+
+                    // Normal Circle Bounce Logic
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+
+                    // Reposition ball inside boundary
+                    ball.x = this.center.x + nx * (currentRadius - ball.radius);
+                    ball.y = this.center.y + ny * (currentRadius - ball.radius);
+
+                    // Reflect Velocity: v' = v - 2 * (v . n) * n
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                    ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+
+                    this.totalBounces++;
+                    const velocitySq = ball.vx * ball.vx + ball.vy * ball.vy;
+                    audioSynth.playBounceSound(velocitySq);
+                    this.addEffects(ball.x, ball.y, ball.color);
+
+                    // Exponential Mode: Duplicate on Bounce
+                    if (this.mode === 'exponential' && this.balls.length < 60) {
+                        this.spawnBall(
+                            ball.x, 
+                            ball.y, 
+                            -ball.vx + (Math.random() - 0.5) * 2, 
+                            -ball.vy + (Math.random() - 0.5) * 2
+                        );
+                    }
+
+                    // Escape mode shrink circle slightly on bounce
+                    if (isEscapeMode) {
+                        this.escapeCircleRadius = Math.max(this.escapeCircleRadius - 0.4, 60);
+                    }
+                }
+            }
+
+            handleDestructionRingsCollision(ball) {
+                const dx = ball.x - this.center.x;
+                const dy = ball.y - this.center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                let ballAngle = Math.atan2(dy, dx);
+                if (ballAngle < 0) ballAngle += Math.PI * 2;
+
+                for (let block of this.ringBlocks) {
+                    if (!block.active) continue;
+
+                    if (Math.abs(dist - block.ringRadius) < ball.radius) {
+                        if (ballAngle >= block.startAngle && ballAngle <= block.endAngle) {
+                            // Destroy block
+                            block.active = false;
+
+                            // Reflect Velocity
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            const dot = ball.vx * nx + ball.vy * ny;
+                            ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                            ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+
+                            this.totalBounces++;
+                            audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
+                            this.addEffects(ball.x, ball.y, `hsl(${block.hue}, 100%, 60%)`);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            handleOuterWallBounds(ball) {
+                const dx = ball.x - this.center.x;
+                const dy = ball.y - this.center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist + ball.radius >= this.boundaryRadius) {
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    ball.x = this.center.x + nx * (this.boundaryRadius - ball.radius);
+                    ball.y = this.center.y + ny * (this.boundaryRadius - ball.radius);
+
+                    const dot = ball.vx * nx + ball.vy * ny;
+                    ball.vx = (ball.vx - 2 * dot * nx) * this.bounciness;
+                    ball.vy = (ball.vy - 2 * dot * ny) * this.bounciness;
+
+                    this.totalBounces++;
+                    audioSynth.playBounceSound(ball.vx * ball.vx + ball.vy * ball.vy);
+                    this.addEffects(ball.x, ball.y, ball.color);
+                }
+            }
+
+            draw() {
+                // Background Clear
+                this.ctx.fillStyle = '#080b11';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw persistent Rainbow Web overlay
+                if (this.mode === 'web') {
+                    this.ctx.drawImage(this.webCanvas, 0, 0);
+                }
+
+                // Draw Mode Boundaries
+                this.drawBoundary();
+
+                // Draw Shockwaves
+                this.shockwaves.forEach(sw => sw.draw(this.ctx));
+
+                // Draw Particles
+                this.particles.forEach(p => p.draw(this.ctx));
+
+                // Draw Balls
+                this.balls.forEach(ball => ball.draw(this.ctx, this.enableTrail));
+            }
+
+            drawBoundary() {
+                this.ctx.save();
+
+                if (this.mode === 'escape') {
+                    // Circular Boundary with Escape Opening
+                    const r = this.escapeCircleRadius;
+                    const gap = this.escapeGapSize;
+                    const start = this.escapeGapAngle + gap / 2;
+                    const end = this.escapeGapAngle + Math.PI * 2 - gap / 2;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.center.x, this.center.y, r, start, end);
+                    this.ctx.strokeStyle = '#ff2a85';
+                    this.ctx.lineWidth = 6;
+                    this.ctx.shadowColor = '#ff2a85';
+                    this.ctx.shadowBlur = 18;
+                    this.ctx.stroke();
+
+                    // Draw Opening Ends Cap Accent
+                    const x1 = this.center.x + Math.cos(start) * r;
+                    const y1 = this.center.y + Math.sin(start) * r;
+                    const x2 = this.center.x + Math.cos(end) * r;
+                    const y2 = this.center.y + Math.sin(end) * r;
+
+                    this.ctx.fillStyle = '#00f2fe';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x1, y1, 5, 0, Math.PI * 2);
+                    this.ctx.arc(x2, y2, 5, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                } else if (this.mode === 'exponential' || this.mode === 'web') {
+                    // Outer Neon Ring
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.center.x, this.center.y, this.boundaryRadius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = '#00f2fe';
+                    this.ctx.lineWidth = 5;
+                    this.ctx.shadowColor = '#00f2fe';
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.stroke();
+
+                } else if (this.mode === 'destruction') {
+                    // Outer Ring
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.center.x, this.center.y, this.boundaryRadius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+
+                    // Render Ring Blocks
+                    this.ringBlocks.forEach(block => {
+                        if (!block.active) return;
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.center.x, this.center.y, block.ringRadius, block.startAngle, block.endAngle);
+                        this.ctx.strokeStyle = `hsl(${block.hue}, 100%, 60%)`;
+                        this.ctx.lineWidth = 12;
+                        this.ctx.shadowColor = `hsl(${block.hue}, 100%, 60%)`;
+                        this.ctx.shadowBlur = 8;
+                        this.ctx.stroke();
+                    });
+                }
+
+                this.ctx.restore();
+            }
+
+            updateUI() {
+                document.getElementById('ballCounter').textContent = this.balls.length;
+                document.getElementById('bounceCounter').textContent = this.totalBounces;
+            }
+
+            bindEvents() {
+                window.addEventListener('resize', () => this.resize());
+
+                this.canvas.addEventListener('click', (e) => {
+                    audioSynth.init();
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    // Launch ball towards click direction or spawn
+                    if (this.balls.length > 0) {
+                        const b = this.balls[0];
+                        const angle = Math.atan2(y - b.y, x - b.x);
+                        b.vx = Math.cos(angle) * 10;
+                        b.vy = Math.sin(angle) * 10;
+                    } else {
+                        this.spawnBall(x, y, (Math.random() - 0.5) * 6, -4);
+                    }
+
+                    // Hide click hint overlay
+                    document.getElementById('clickHint').style.opacity = '0';
+                });
+            }
+        }
+
+        window.onload = function() {
+            const sim = new Simulation();
+
+            // Render Loop
+            function animate() {
+                sim.update();
+                sim.draw();
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // Mode Selector Event Handler
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => {
+                        b.classList.remove('border-pink-500/50', 'bg-pink-500/10', 'text-white');
+                        b.classList.add('border-slate-700', 'bg-slate-800/50', 'text-slate-300');
+                    });
+                    btn.classList.remove('border-slate-700', 'bg-slate-800/50', 'text-slate-300');
+                    btn.classList.add('border-pink-500/50', 'bg-pink-500/10', 'text-white');
+
+                    sim.mode = btn.dataset.mode;
+                    sim.initMode();
+                });
+            });
+
+            // Audio Controls
+            document.getElementById('audioInitBtn').addEventListener('click', () => {
+                audioSynth.init();
+                audioSynth.playBounceSound(100);
+            });
+
+            document.getElementById('instSelect').addEventListener('change', (e) => {
+                audioSynth.instrument = e.target.value;
+            });
+
+            document.getElementById('scaleSelect').addEventListener('change', (e) => {
+                audioSynth.scaleName = e.target.value;
+                document.getElementById('scaleNoteDisplay').textContent = e.target.options[e.target.selectedIndex].text.split(' ')[0];
+            });
+
+            document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                audioSynth.volume = e.target.value / 100;
+                document.getElementById('volumeValue').textContent = `${e.target.value}%`;
+            });
+
+            // Physics Sliders
+            document.getElementById('gravitySlider').addEventListener('input', (e) => {
+                sim.gravity = parseFloat(e.target.value);
+                document.getElementById('gravityVal').textContent = sim.gravity.toFixed(2);
+            });
+
+            document.getElementById('bounceSlider').addEventListener('input', (e) => {
+                sim.bounciness = parseFloat(e.target.value);
+                document.getElementById('bounceVal').textContent = sim.bounciness.toFixed(2);
+            });
+
+            document.getElementById('radiusSlider').addEventListener('input', (e) => {
+                sim.ballRadius = parseInt(e.target.value);
+                document.getElementById('radiusVal').textContent = `${sim.ballRadius}px`;
+                sim.balls.forEach(b => b.radius = sim.ballRadius);
+            });
+
+            // Visual Switches
+            document.getElementById('trailToggle').addEventListener('change', (e) => {
+                sim.enableTrail = e.target.checked;
+            });
+
+            document.getElementById('particlesToggle').addEventListener('change', (e) => {
+                sim.enableParticles = e.target.checked;
+            });
+
+            document.getElementById('shockwavesToggle').addEventListener('change', (e) => {
+                sim.enableShockwaves = e.target.checked;
+            });
+
+            // Reset & Spawn Buttons
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                sim.initMode();
+            });
+
+            document.getElementById('spawnBallBtn').addEventListener('click', () => {
+                sim.spawnBall(sim.center.x, sim.center.y - 30);
+            });
+        };
+    </script>
 </body>
 </html>

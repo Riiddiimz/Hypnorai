@@ -48,6 +48,9 @@ class FreezeCircleMode {
         const sub=8,step=dtScale/sub;
         for(let s=0;s<sub;s++){
             const b=this.activeBall;if(!b)break;
+            b.vy += this.sim.gravity * step;
+            const speed=Math.hypot(b.vx,b.vy);
+            if(speed>this.sim.maxSpeed){b.vx=b.vx/speed*this.sim.maxSpeed;b.vy=b.vy/speed*this.sim.maxSpeed;}
             b.x+=b.vx*step;b.y+=b.vy*step;
             for(const f of this.frozenBalls){
                 let dx=b.x-f.x,dy=b.y-f.y,d=Math.hypot(dx,dy),min=b.radius+f.radius;

@@ -540,11 +540,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // Mode Spiral Vault : sélection du mode, réglages, défauts
+    // Mode Freeze Circle : sélection, réglages et valeurs par défaut
     // =========================================================================
     const classicBox = document.getElementById('classicSettingsBox');
-    const spiralBox = document.getElementById('spiralSettingsBox');
-    const spiralMode = () => sim.modes.spiral;
+    const freezeBox = document.getElementById('freezeCircleSettingsBox');
+    const freezeMode = () => sim.modes.freezeCircle;
 
     function syncPhysicsUI() {
         if (gravitySlider) gravitySlider.value = sim.gravity;
@@ -557,46 +557,57 @@ window.addEventListener('DOMContentLoaded', () => {
         if (speedBoostVal) speedBoostVal.textContent = `+${Math.round((sim.speedBoost - 1) * 100)}%`;
     }
 
-    const spBlocks = document.getElementById('spiralBlocksSlider');
-    const spBlocksVal = document.getElementById('spiralBlocksVal');
-    const spSplit = document.getElementById('spiralSplitSlider');
-    const spSplitVal = document.getElementById('spiralSplitVal');
-    const spRot = document.getElementById('spiralRotSlider');
-    const spRotVal = document.getElementById('spiralRotVal');
-    const spDir = document.getElementById('spiralDirSelect');
-    const spPalette = document.getElementById('spiralPaletteSelect');
-    const spMelody = document.getElementById('spiralMelodySelect');
-    const spMulti = document.getElementById('spiralMultiColorToggle');
-    const spSlowmo = document.getElementById('spiralSlowmoToggle');
-    const spLoop = document.getElementById('spiralLoopToggle');
+    const freezeGapSize = document.getElementById('freezeGapSizeSlider');
+    const freezeGapSizeVal = document.getElementById('freezeGapSizeVal');
+    const freezeGapAngle = document.getElementById('freezeGapAngleSlider');
+    const freezeGapAngleVal = document.getElementById('freezeGapAngleVal');
+    const freezePosX = document.getElementById('freezePosXSlider');
+    const freezePosXVal = document.getElementById('freezePosXVal');
+    const freezePosY = document.getElementById('freezePosYSlider');
+    const freezePosYVal = document.getElementById('freezePosYVal');
+    const freezeSpeed = document.getElementById('freezeSpeedSlider');
+    const freezeSpeedVal = document.getElementById('freezeSpeedVal');
 
-    function syncSpiralUI() {
-        const m = spiralMode();
-        if (spBlocks) spBlocks.value = m.blockCount;
-        if (spBlocksVal) spBlocksVal.textContent = m.blockCount;
-        if (spSplit) spSplit.value = m.splitLevels;
-        if (spSplitVal) spSplitVal.textContent = m.splitLevels;
-        if (spRot) spRot.value = m.rotationSpeed;
-        if (spRotVal) spRotVal.textContent = m.rotationSpeed.toFixed(2);
-        if (spDir) spDir.value = m.rotationDirection;
-        if (spPalette) spPalette.value = m.paletteName;
-        if (spMelody) spMelody.value = m.melody;
-        if (spMulti) spMulti.checked = m.multiColor;
-        if (spSlowmo) spSlowmo.checked = m.slowmo;
-        if (spLoop) spLoop.checked = m.autoLoop;
+    function syncFreezeUI() {
+        const m = freezeMode();
+        if (freezeGapSize) freezeGapSize.value = m.gapSizeDeg;
+        if (freezeGapSizeVal) freezeGapSizeVal.textContent = `${m.gapSizeDeg}°`;
+        if (freezeGapAngle) freezeGapAngle.value = m.gapAngleDeg;
+        if (freezeGapAngleVal) freezeGapAngleVal.textContent = `${m.gapAngleDeg}°`;
+        if (freezePosX) freezePosX.value = m.positionX;
+        if (freezePosXVal) freezePosXVal.textContent = `${m.positionX}%`;
+        if (freezePosY) freezePosY.value = m.positionY;
+        if (freezePosYVal) freezePosYVal.textContent = `${m.positionY}%`;
+        if (freezeSpeed) freezeSpeed.value = m.ballSpeed;
+        if (freezeSpeedVal) freezeSpeedVal.textContent = m.ballSpeed.toFixed(1);
     }
 
-    // Les changements de réglages redémarrent la vidéo (même seed)
-    const bindSpiral = (el, evt, fn) => { if (el) el.addEventListener(evt, (e) => { fn(e); sim.initMode(); }); };
-    bindSpiral(spBlocks, 'input', e => { spiralMode().blockCount = parseInt(e.target.value, 10); spBlocksVal.textContent = e.target.value; });
-    bindSpiral(spSplit, 'input', e => { spiralMode().splitLevels = parseInt(e.target.value, 10); spSplitVal.textContent = e.target.value; });
-    bindSpiral(spRot, 'input', e => { spiralMode().rotationSpeed = parseFloat(e.target.value); spRotVal.textContent = parseFloat(e.target.value).toFixed(2); });
-    bindSpiral(spDir, 'change', e => { spiralMode().rotationDirection = e.target.value; });
-    bindSpiral(spPalette, 'change', e => { spiralMode().paletteName = e.target.value; });
-    bindSpiral(spMelody, 'change', e => { spiralMode().melody = e.target.value; });
-    bindSpiral(spMulti, 'change', e => { spiralMode().multiColor = e.target.checked; });
-    bindSpiral(spSlowmo, 'change', e => { spiralMode().slowmo = e.target.checked; });
-    if (spLoop) spLoop.addEventListener('change', e => { spiralMode().autoLoop = e.target.checked; });
+    const bindFreeze = (el, evt, fn) => {
+        if (el) el.addEventListener(evt, (e) => {
+            fn(e);
+            sim.initMode();
+        });
+    };
+    bindFreeze(freezeGapSize, 'input', e => {
+        freezeMode().gapSizeDeg = parseFloat(e.target.value);
+        freezeGapSizeVal.textContent = `${freezeMode().gapSizeDeg}°`;
+    });
+    bindFreeze(freezeGapAngle, 'input', e => {
+        freezeMode().gapAngleDeg = parseFloat(e.target.value);
+        freezeGapAngleVal.textContent = `${freezeMode().gapAngleDeg}°`;
+    });
+    bindFreeze(freezePosX, 'input', e => {
+        freezeMode().positionX = parseFloat(e.target.value);
+        freezePosXVal.textContent = `${freezeMode().positionX}%`;
+    });
+    bindFreeze(freezePosY, 'input', e => {
+        freezeMode().positionY = parseFloat(e.target.value);
+        freezePosYVal.textContent = `${freezeMode().positionY}%`;
+    });
+    bindFreeze(freezeSpeed, 'input', e => {
+        freezeMode().ballSpeed = parseFloat(e.target.value);
+        freezeSpeedVal.textContent = freezeMode().ballSpeed.toFixed(1);
+    });
 
     function selectMode(id) {
         sim.setMode(id);
@@ -607,27 +618,26 @@ window.addEventListener('DOMContentLoaded', () => {
             if (badge) badge.textContent = on ? 'Actif' : 'Choisir';
         });
         if (classicBox) classicBox.classList.toggle('hidden', id !== 'classic');
-        if (spiralBox) spiralBox.classList.toggle('hidden', id !== 'spiral');
+        if (freezeBox) freezeBox.classList.toggle('hidden', id !== 'freezeCircle');
         if (findSeedBtn) findSeedBtn.classList.remove('searching-active');
         if (seedSearchStatusBox) seedSearchStatusBox.classList.add('hidden');
-        updateTargetDuration(id === 'spiral' ? 60 : 30);
+        updateTargetDuration(30);
         sim.activeMode.setTargetDuration && sim.activeMode.setTargetDuration(targetDuration);
         syncPhysicsUI();
-        syncSpiralUI();
+        syncFreezeUI();
         if (manualSeedInput) manualSeedInput.value = sim.seed;
     }
     document.querySelectorAll('#modeButtons .mode-btn').forEach(btn => {
         btn.addEventListener('click', () => selectMode(btn.dataset.mode));
     });
 
-    // Remplace le bouton "Défauts" (retire l'ancien écouteur, valable pour les 2 modes)
     if (resetModeDefaultsBtn) {
         const freshBtn = resetModeDefaultsBtn.cloneNode(true);
         resetModeDefaultsBtn.replaceWith(freshBtn);
         freshBtn.addEventListener('click', () => {
             sim.applyModeDefaults();
             syncPhysicsUI();
-            syncSpiralUI();
+            syncFreezeUI();
             if (sim.activeModeId === 'classic') {
                 if (classicRingsSlider) classicRingsSlider.value = sim.activeMode.ringCount;
                 if (classicRingsVal) classicRingsVal.textContent = sim.activeMode.ringCount;

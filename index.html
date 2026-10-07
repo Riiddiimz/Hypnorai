@@ -91,10 +91,10 @@
                         </span>
                         <span class="text-[10px] text-emerald-400 font-mono font-semibold">Actif</span>
                     </button>
-                    <button data-mode="spiral" class="mode-btn w-full px-3 py-2 rounded-xl border border-cyan-500/60 bg-cyan-500/10 text-white font-medium hover:bg-cyan-500/20 transition flex items-center justify-between text-xs opacity-50">
+                    <button data-mode="freezeCircle" class="mode-btn w-full px-3 py-2 rounded-xl border border-cyan-500/60 bg-cyan-500/10 text-white font-medium hover:bg-cyan-500/20 transition flex items-center justify-between text-xs opacity-50">
                         <span class="flex items-center gap-2">
-                            <i class="fa-solid fa-hurricane text-cyan-400 text-sm"></i>
-                            <span class="font-semibold">Spiral Vault (60 s)</span>
+                            <i class="fa-solid fa-circle-dot text-cyan-400 text-sm"></i>
+                            <span class="font-semibold">Freeze Circle (5 s)</span>
                         </span>
                         <span class="text-[10px] text-cyan-400 font-mono font-semibold">Choisir</span>
                     </button>
@@ -194,74 +194,51 @@
                 </div>
             </div>
 
-            <!-- Mode Settings Accordion (Spiral) -->
-            <div id="spiralSettingsBox" class="hidden rounded-2xl bg-zinc-900/60 border border-cyan-500/30 overflow-hidden">
-                <button type="button" class="accordion-toggle w-full p-3 flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider hover:bg-zinc-800/40 transition" data-target="spiralSettings">
-                    <span class="flex items-center gap-2 text-cyan-400"><i class="fa-solid fa-sliders"></i> Réglages Mode : Spiral</span>
+            <!-- Mode Settings Accordion (Freeze Circle) -->
+            <div id="freezeCircleSettingsBox" class="hidden rounded-2xl bg-zinc-900/60 border border-cyan-500/30 overflow-hidden">
+                <button type="button" class="accordion-toggle w-full p-3 flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider hover:bg-zinc-800/40 transition" data-target="freezeCircleSettings">
+                    <span class="flex items-center gap-2 text-cyan-400"><i class="fa-solid fa-sliders"></i> Réglages Mode : Freeze Circle</span>
                     <i class="fa-solid fa-chevron-down text-zinc-400 transition-transform duration-200"></i>
                 </button>
-                <div id="spiralSettings" class="accordion-content open px-3 pb-3 space-y-2.5 pt-1">
+                <div id="freezeCircleSettings" class="accordion-content open px-3 pb-3 space-y-2.5 pt-1">
                     <div>
                         <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="spiralBlocksSlider">Nombre de blocs</label>
-                            <span id="spiralBlocksVal" class="text-cyan-400 font-mono font-semibold">60</span>
+                            <label for="freezeGapSizeSlider">Taille de l'ouverture</label>
+                            <span id="freezeGapSizeVal" class="text-cyan-400 font-mono font-semibold">42°</span>
                         </div>
-                        <input id="spiralBlocksSlider" type="range" min="36" max="120" step="12" value="60" class="w-full">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="spiralSplitSlider">Paliers de division</label>
-                            <span id="spiralSplitVal" class="text-cyan-400 font-mono font-semibold">3</span>
-                        </div>
-                        <input id="spiralSplitSlider" type="range" min="0" max="4" step="1" value="3" class="w-full">
+                        <input id="freezeGapSizeSlider" type="range" min="8" max="120" step="1" value="42" class="w-full" aria-label="Taille de l'ouverture en degrés">
                     </div>
                     <div>
                         <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="spiralRotSlider">Vitesse de rotation</label>
-                            <span id="spiralRotVal" class="text-cyan-400 font-mono font-semibold">0.30</span>
+                            <label for="freezeGapAngleSlider">Position de l'ouverture</label>
+                            <span id="freezeGapAngleVal" class="text-cyan-400 font-mono font-semibold">-90°</span>
                         </div>
-                        <input id="spiralRotSlider" type="range" min="0" max="0.8" step="0.05" value="0.3" class="w-full">
+                        <input id="freezeGapAngleSlider" type="range" min="-180" max="180" step="1" value="-90" class="w-full" aria-label="Position angulaire de l'ouverture">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                                <label for="freezePosXSlider">Cercle X</label>
+                                <span id="freezePosXVal" class="text-cyan-400 font-mono font-semibold">0%</span>
+                            </div>
+                            <input id="freezePosXSlider" type="range" min="-35" max="35" step="1" value="0" class="w-full" aria-label="Position horizontale du cercle">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                                <label for="freezePosYSlider">Cercle Y</label>
+                                <span id="freezePosYVal" class="text-cyan-400 font-mono font-semibold">0%</span>
+                            </div>
+                            <input id="freezePosYSlider" type="range" min="-35" max="35" step="1" value="0" class="w-full" aria-label="Position verticale du cercle">
+                        </div>
                     </div>
                     <div>
-                        <label for="spiralDirSelect" class="text-[11px] text-zinc-400 block mb-1">Sens de rotation</label>
-                        <select id="spiralDirSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                            <option value="alternate">Alterné (change toutes les 10 s)</option>
-                            <option value="clockwise">Sens horaire</option>
-                            <option value="counter">Sens anti-horaire</option>
-                        </select>
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <label for="freezeSpeedSlider">Vitesse des balles</label>
+                            <span id="freezeSpeedVal" class="text-cyan-400 font-mono font-semibold">5.2</span>
+                        </div>
+                        <input id="freezeSpeedSlider" type="range" min="2" max="12" step="0.1" value="5.2" class="w-full" aria-label="Vitesse des balles">
                     </div>
-                    <div>
-                        <label for="spiralPaletteSelect" class="text-[11px] text-zinc-400 block mb-1">Palette</label>
-                        <select id="spiralPaletteSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                            <option value="neon">Neon Glow</option>
-                            <option value="cyberpunk">Cyberpunk Pink/Cyan</option>
-                            <option value="ocean">Deep Ocean</option>
-                            <option value="sunset">Golden Sunset</option>
-                            <option value="candy">Cotton Candy</option>
-                            <option value="fire">Fire & Lava</option>
-                            <option value="rainbow">Chroma Rainbow</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="spiralMelodySelect" class="text-[11px] text-zinc-400 block mb-1">Motif de la mélodie</label>
-                        <select id="spiralMelodySelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                            <option value="ascending">Ascendant</option>
-                            <option value="arpeggio">Arpège</option>
-                            <option value="seeded">Aléatoire (par seed)</option>
-                        </select>
-                    </div>
-                    <label class="flex items-center justify-between cursor-pointer py-1 px-1 text-xs text-zinc-300">
-                        <span>Mode multi-couleur</span>
-                        <input type="checkbox" id="spiralMultiColorToggle" checked class="accent-cyan-500">
-                    </label>
-                    <label class="flex items-center justify-between cursor-pointer py-1 px-1 text-xs text-zinc-300">
-                        <span>Ralenti final (3 derniers blocs)</span>
-                        <input type="checkbox" id="spiralSlowmoToggle" checked class="accent-cyan-500">
-                    </label>
-                    <label class="flex items-center justify-between cursor-pointer py-1 px-1 text-xs text-zinc-300">
-                        <span>Boucle auto (la spirale se reforme)</span>
-                        <input type="checkbox" id="spiralLoopToggle" checked class="accent-cyan-500">
-                    </label>
+                    <p class="text-[10px] text-zinc-500 leading-relaxed">Chaque balle garde la même direction initiale. Elle rebondit pendant 5 secondes, se fige et devient un morceau de paroi. La partie s'arrête dès qu'une balle sort par l'ouverture.</p>
                 </div>
             </div>
 
@@ -595,7 +572,7 @@
     <script src="js/effects.js"></script>
     <script src="js/ball.js"></script>
     <script src="js/modes/classic.js"></script>
-    <script src="js/modes/spiral.js"></script>
+    <script src="js/modes/freezeCircle.js"></script>
     <script src="js/seedSearcher.js"></script>
     <script src="js/simulation.js"></script>
     <script src="js/app.js"></script>

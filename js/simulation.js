@@ -46,7 +46,7 @@ class Simulation {
         this.cssHeight = 0;
 
         // Active Mode (Classic by default)
-        this.modes = { classic: new ClassicMode(this), spiral: new SpiralMode(this) };
+        this.modes = { classic: new ClassicMode(this), freezeCircle: new FreezeCircleMode(this) };
         this.activeModeId = 'classic';
         this.activeMode = this.modes.classic;
 
@@ -159,6 +159,12 @@ class Simulation {
         // Setup active mode
         if (this.activeMode && this.activeMode.setupRings) {
             this.activeMode.setupRings(true);
+        }
+
+        if (this.activeMode && this.activeMode.initializeBalls) {
+            this.activeMode.initializeBalls();
+            this.updateStatsUI();
+            return;
         }
 
         // Spawn ball safely at center inside innermost ring using deterministic velocities

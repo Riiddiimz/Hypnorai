@@ -37,33 +37,30 @@ const MODES_CONFIG = {
         }
     },
 
-    spiral: {
-        id: 'spiral',
-        name: 'Spiral Vault',
+    freezeCircle: {
+        id: 'freezeCircle',
+        name: 'Freeze Circle',
         badge: 'Nouveau',
-        description: 'Une spirale de blocs, un par seconde : la balle les détruit un à un, la mélodie se construit, le dernier bloc casse à la fin de la vidéo.',
-        icon: 'fa-hurricane',
+        description: 'Un cercle fixe avec une ouverture : une balle rebondit 5 s, se fige, puis la suivante repart dans la même direction.',
+        icon: 'fa-circle-dot',
         color: '#00f2fe',
 
         ballPhysics: {
-            gravity: 0.20,
+            gravity: 0,
             bounciness: 1.00,
-            ballRadius: 11,
-            speedBoost: 1.01,
-            maxSpeed: 16
+            ballRadius: 12,
+            speedBoost: 1.00,
+            maxSpeed: 20
         },
 
         modeSettings: {
-            blockCount: 60,
-            splitLevels: 3,
-            rotationSpeed: 0.3,
-            rotationDirection: 'alternate',
-            paletteName: 'cyberpunk',
-            multiColor: true,
-            slowmo: true,
-            autoLoop: true,
-            melody: 'ascending',
-            targetDuration: 60
+            ringRadiusRatio: 0.72,
+            gapSizeDeg: 42,
+            gapAngleDeg: -90,
+            positionX: 0,
+            positionY: 0,
+            ballSpeed: 5.2,
+            freezeInterval: 5
         }
     },
 

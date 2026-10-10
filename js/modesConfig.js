@@ -161,7 +161,7 @@ const MODES_CONFIG = {
         modeSettings: {}
     },
     target: {
-        id: 'target', name: 'Target', badge: 'Nouveau', description: 'Détruis les segments numérotés en les touchant dans l'ordre.', icon: 'fa-bullseye', color: '#facc15',
+        id: 'target', name: 'Target', badge: 'Nouveau', description: 'Détruis les segments numérotés en les touchant dans la séquence prévue.', icon: 'fa-bullseye', color: '#facc15',
         ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
         modeSettings: {"targetCount":12}
     },

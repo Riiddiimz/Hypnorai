@@ -166,7 +166,7 @@ const MODES_CONFIG = {
         modeSettings: {"targetCount":12}
     },
     grow: {
-        id: 'grow', name: 'Grow', badge: 'Nouveau', description: 'La balle grossit à chaque rebond jusqu'à repousser les limites de l'arène.', icon: 'fa-expand', color: '#4ade80',
+        id: 'grow', name: 'Grow', badge: 'Nouveau', description: 'La balle grossit à chaque rebond pour repousser les limites de l'espace.', icon: 'fa-expand', color: '#4ade80',
         ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 10, speedBoost: 1.01, maxSpeed: 28 },
         modeSettings: {"growthPerBounce":0.35}
     },

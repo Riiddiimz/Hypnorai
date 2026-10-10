@@ -12,7 +12,7 @@ class SeedSearcher {
         this.searchTaskId = null;
 
         // Search parameters
-        this.targetDuration = 30; // seconds
+        this.targetDuration = 65; // seconds
         this.tolerance = 0.45; // seconds
         this.testedCount = 0;
         this.bestSeed = null;

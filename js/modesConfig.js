@@ -156,7 +156,7 @@ const MODES_CONFIG = {
         modeSettings: {}
     },
     paint: {
-        id: 'paint', name: 'Paint', badge: 'Nouveau', description: 'La balle peint l'arène avec une traînée arc-en-ciel et affiche la couverture.', icon: 'fa-palette', color: '#fb7185',
+        id: 'paint', name: 'Paint', badge: 'Nouveau', description: "La balle peint la zone avec une traînée arc-en-ciel et affiche la couverture.", icon: 'fa-palette', color: '#fb7185',
         ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
         modeSettings: {}
     },

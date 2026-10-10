@@ -113,29 +113,6 @@ const MODES_CONFIG = {
     },
 
     accumulation: {
-        id: 'accumulation',
-        name: 'Spike Trap',
-        badge: 'Bientôt',
-        description: 'Des pics capturent les balles jusqu\'au seuil critique de l\'explosion.',
-        icon: 'fa-certificate',
-        color: '#ff2a85', // Pink
-
-        // Gravité modérée, rayon standard
-        ballPhysics: {
-            gravity: 0.22,
-            bounciness: 1.01,
-            ballRadius: 12,
-            speedBoost: 1.00,
-            maxSpeed: 30
-        },
-
-        modeSettings: {
-            spikeCount: 16,
-            stickThreshold: 12,
-            explosionForce: 8
-        }
-    },
-    accumulation: {
         id: 'accumulation', name: 'Accumulation', badge: 'Nouveau', description: 'Chaque balle dispose de cinq secondes avant de se figer et devenir un obstacle.', icon: 'fa-layer-group', color: '#f97316',
         ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 13, speedBoost: 1.01, maxSpeed: 32 },
         modeSettings: {"freezeInterval":5}

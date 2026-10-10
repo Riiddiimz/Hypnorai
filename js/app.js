@@ -296,7 +296,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // Deterministic Seed & Duration Searcher Controller
     // =========================================================================
-    let targetDuration = 30;
+    let targetDuration = 65;
     const customDurationSlider = document.getElementById('customDurationSlider');
     const targetDurationVal = document.getElementById('targetDurationVal');
     const findSeedBtn = document.getElementById('findSeedBtn');
@@ -621,7 +621,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (freezeBox) freezeBox.classList.toggle('hidden', id !== 'freezeCircle');
         if (findSeedBtn) findSeedBtn.classList.remove('searching-active');
         if (seedSearchStatusBox) seedSearchStatusBox.classList.add('hidden');
-        updateTargetDuration(30);
+        updateTargetDuration(65);
         sim.activeMode.setTargetDuration && sim.activeMode.setTargetDuration(targetDuration);
         syncPhysicsUI();
         syncFreezeUI();

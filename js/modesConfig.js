@@ -134,6 +134,56 @@ const MODES_CONFIG = {
             stickThreshold: 12,
             explosionForce: 8
         }
+    },
+    accumulation: {
+        id: 'accumulation', name: 'Accumulation', badge: 'Nouveau', description: 'Chaque balle dispose de cinq secondes avant de se figer et devenir un obstacle.', icon: 'fa-layer-group', color: '#f97316',
+        ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 13, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {"freezeInterval":5}
+    },
+    multiply: {
+        id: 'multiply', name: 'Multiply', badge: 'Nouveau', description: 'Chaque rebond sur la paroi génère des balles supplémentaires.', icon: 'fa-clone', color: '#f43f5e',
+        ballPhysics: { gravity: 0.18, bounciness: 1, ballRadius: 8, speedBoost: 1, maxSpeed: 26 },
+        modeSettings: {"spawnPerBounce":2,"maxBalls":70}
+    },
+    battleLines: {
+        id: 'battleLines', name: 'Battle Lines', badge: 'Nouveau', description: 'Six boules sans gravité : les lignes disparaissent au contact et les rebords en rendent trois.', icon: 'fa-grip-lines', color: '#a78bfa',
+        ballPhysics: { gravity: 0, bounciness: 1, ballRadius: 9, speedBoost: 1, maxSpeed: 22 },
+        modeSettings: {"ballCount":6,"startingLines":5,"wallLineGain":3}
+    },
+    lines: {
+        id: 'lines', name: 'Lines', badge: 'Nouveau', description: 'Chaque point de rebond est relié au centre pour créer un dessin géométrique.', icon: 'fa-bezier-curve', color: '#22d3ee',
+        ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {}
+    },
+    paint: {
+        id: 'paint', name: 'Paint', badge: 'Nouveau', description: 'La balle peint l'arène avec une traînée arc-en-ciel et affiche la couverture.', icon: 'fa-palette', color: '#fb7185',
+        ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {}
+    },
+    target: {
+        id: 'target', name: 'Target', badge: 'Nouveau', description: 'Détruis les segments numérotés en les touchant dans l'ordre.', icon: 'fa-bullseye', color: '#facc15',
+        ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {"targetCount":12}
+    },
+    grow: {
+        id: 'grow', name: 'Grow', badge: 'Nouveau', description: 'La balle grossit à chaque rebond jusqu'à repousser les limites de l'arène.', icon: 'fa-expand', color: '#4ade80',
+        ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 10, speedBoost: 1.01, maxSpeed: 28 },
+        modeSettings: {"growthPerBounce":0.35}
+    },
+    shatter: {
+        id: 'shatter', name: 'Shatter', badge: 'Nouveau', description: 'Les segments de la paroi se fissurent et se brisent après plusieurs impacts.', icon: 'fa-burst', color: '#f97316',
+        ballPhysics: { gravity: 0.2, bounciness: 1.03, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {"segmentCount":24,"hitsToBreak":2}
+    },
+    colorMatch: {
+        id: 'colorMatch', name: 'Color Match', badge: 'Nouveau', description: 'La balle change de couleur à chaque rebond et brise les segments de couleur assortie.', icon: 'fa-droplet', color: '#c084fc',
+        ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {"segmentCount":24}
+    },
+    portal: {
+        id: 'portal', name: 'Portal', badge: 'Nouveau', description: 'Les portails jumelés téléportent la balle puis se brisent après trois utilisations.', icon: 'fa-right-left', color: '#38bdf8',
+        ballPhysics: { gravity: 0.2, bounciness: 1.02, ballRadius: 12, speedBoost: 1.01, maxSpeed: 32 },
+        modeSettings: {"portalUses":3}
     }
 };
 

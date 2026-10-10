@@ -18,7 +18,7 @@ if(this.id==="paint"){this.points.push({x:b.x,y:b.y,h:this.points.length*3%360})
 if(this.id==="grow")b.radius=Math.min(b.radius+.35,this.radius*.35);
 if(this.id==="target"){let s=this.segments.find(s=>s.alive&&Math.abs(this.diff(a,s.a))<.3);if(s&&s.n===this.segments.filter(x=>!x.alive).length+1)s.alive=false;if(this.segments.every(s=>!s.alive))this.sim.triggerVictory()}
 if(this.id==="shatter"||this.id==="colorMatch"){let s=this.segments.find(s=>s.alive&&Math.abs(this.diff(a,s.a))<.13);if(s&&(this.id==="shatter"||Math.floor(b.hue/60)===Math.floor(s.hue/60))){s.hp--;if(!s.hp)s.alive=false;if(this.segments.every(s=>!s.alive))this.sim.triggerVictory()}if(this.id==="colorMatch")b.hue=(b.hue+60)%360}
-if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,p.a))<.22);if(p){let t=this.portals.find(q=>q!==p&&q.alive&&q.h===p.h);if(t){p.n++;t.n++;b.x=this.cx+Math.cos(t.a)*(this.radius-b.radius-8);b.y=this.cy+Math.sin(t.a)*(this.radius-b.radius-8);if(p.n>=3){p.alive=false;t.alive=false}}}if(this.portals.every(p=>!p.alive))this.sim.triggerVictory()}
+if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,p.a))<.22);if(p){let t=this.portals.find(q=>q!==p&&q.alive&&q.h===p.h);if(t){p.n++;t.n++;b.x=this.cx+Math.cos(t.a)*(this.radius-b.radius-8);b.y=this.cy+Math.sin(t.a)*(this.radius-b.radius-8);if(p.n>=3){p.alive=false;t.alive=false}}}else this.bounce(b,dx,dy,d);if(this.portals.every(p=>!p.alive))this.sim.triggerVictory()}
 
 }
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);this.reflect(b,nx,ny)}}

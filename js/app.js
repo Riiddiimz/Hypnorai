@@ -171,7 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ['accSpeed','ballSpeed','accSpeedVal',v=>Number(v).toFixed(1)],
         ['mulInitial','initialBalls','mulInitialVal',v=>v],
         ['mulSpawn','spawnPerBounce','mulSpawnVal',v=>v],
-        ['mulMax','maxBalls','mulMaxVal',v=>v],
+        ['mulDiameter','radiusScale','mulDiameterVal',v=>v+'%'],
         ['mulSpeed','ballSpeed','mulSpeedVal',v=>v],
         ['battleCount','ballCount','battleCountVal',v=>v],
         ['battleLines','startingLines','battleLinesVal',v=>v],
@@ -191,7 +191,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const mode=sim.activeMode;if(!mode)return;
             mode[prop]=Number(el.value);
             const label=document.getElementById(labelId);if(label)label.textContent=format(el.value);
-            if(['mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','accFreeze','accSpeed'].includes(id))sim.initMode();
+            if(['mulInitial','mulSpawn','mulDiameter','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','accFreeze','accSpeed'].includes(id))sim.initMode();
         });
     });
     document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(syncArcadeModePanel,0)));
@@ -719,11 +719,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulDiameter','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
         classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
         accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
-        multiply:['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
+        multiply:['initialBalls','spawnPerBounce','radiusScale','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
     };
 
@@ -741,7 +741,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const modeSettingKeys = {
             classic: ['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
             accumulation: ['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
-            multiply: ['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
+            multiply: ['initialBalls','spawnPerBounce','radiusScale','ballSpeed'],
             battleLines: ['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
         };
         const modeSettings = {};

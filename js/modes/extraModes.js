@@ -25,38 +25,49 @@ for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radiu
 }}
 updateMultiply(dt){
   const balls=this.sim.balls;
-  // Keep the user-selected ball size unchanged in Multiply mode.
   for(const b of balls)b.radius=this.sim.ballRadius||13;
-  // Movement and rebounds on the circle never create balls.
   for(const b of [...balls]){
    b.vy+=this.sim.gravity*dt;
    b.x+=b.vx*dt;b.y+=b.vy*dt;
    const dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);
    if(d>=this.radius-b.radius)this.bounce(b,dx,dy,d);
   }
-  // Multiply only when two balls physically collide.
-  const collisionCount=balls.length;
-  for(let i=0;i<collisionCount&&balls.length<this.maxBalls;i++){
-   for(let j=i+1;j<collisionCount&&balls.length<this.maxBalls;j++){
-    const a=balls[i],b=balls[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.radius+b.radius;
-    if(d<=0||d>=min)continue;
-    const nx=dx/d,ny=dy/d;
-    const closing=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
-    // Separate overlapping balls so a single contact cannot trigger repeatedly.
-    const overlap=min-d;
-    a.x-=nx*overlap/2;a.y-=ny*overlap/2;
-    b.x+=nx*overlap/2;b.y+=ny*overlap/2;
-    if(closing<=0)continue;
-    a.vx-=closing*nx;a.vy-=closing*ny;
-    b.vx+=closing*nx;b.vy+=closing*ny;
-    for(let k=0;k<this.spawnPerBounce&&balls.length<this.maxBalls;k++){
-     const angle=Math.atan2((a.vy+b.vy)/2,(a.vx+b.vx)/2)+(k%2===0?Math.PI/2:-Math.PI/2);
-     const hue=(a.hue+(k+1)*55)%360;
-     this.sim.spawnBall((a.x+b.x)/2+Math.cos(angle)*(min+2),(a.y+b.y)/2+Math.sin(angle)*(min+2),Math.cos(angle)*this.ballSpeed,Math.sin(angle)*this.ballSpeed,hue);
+  // Spatial grid: only compare balls occupying neighboring cells, not every pair.
+  const cellSize=Math.max(8,(this.sim.ballRadius||13)*2.2);
+  const grid=new Map();
+  for(let i=0;i<balls.length;i++){
+   const b=balls[i],gx=Math.floor(b.x/cellSize),gy=Math.floor(b.y/cellSize),key=gx+","+gy;
+   if(!grid.has(key))grid.set(key,[]);
+   grid.get(key).push(i);
+  }
+  const checked=new Set();
+  for(let i=0;i<balls.length&&balls.length<this.maxBalls;i++){
+   const a=balls[i],gx=Math.floor(a.x/cellSize),gy=Math.floor(a.y/cellSize);
+   for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
+    const nearby=grid.get((gx+ox)+","+(gy+oy));
+    if(!nearby)continue;
+    for(const j of nearby){
+     if(j<=i)continue;
+     const pairKey=i+":"+j;if(checked.has(pairKey))continue;checked.add(pairKey);
+     const other=balls[j],dx=other.x-a.x,dy=other.y-a.y,d=Math.hypot(dx,dy),min=a.radius+other.radius;
+     if(d<=0||d>=min)continue;
+     const nx=dx/d,ny=dy/d;
+     const closing=(a.vx-other.vx)*nx+(a.vy-other.vy)*ny;
+     const overlap=min-d;
+     a.x-=nx*overlap/2;a.y-=ny*overlap/2;
+     other.x+=nx*overlap/2;other.y+=ny*overlap/2;
+     if(closing<=0)continue;
+     a.vx-=closing*nx;a.vy-=closing*ny;
+     other.vx+=closing*nx;other.vy+=closing*ny;
+     for(let k=0;k<this.spawnPerBounce&&balls.length<this.maxBalls&&balls.length<1200;k++){
+      const angle=Math.atan2((a.vy+other.vy)/2,(a.vx+other.vx)/2)+(k%2===0?Math.PI/2:-Math.PI/2);
+      const hue=(a.hue+(k+1)*55)%360;
+      this.sim.spawnBall((a.x+other.x)/2+Math.cos(angle)*(min+2),(a.y+other.y)/2+Math.sin(angle)*(min+2),Math.cos(angle)*this.ballSpeed,Math.sin(angle)*this.ballSpeed,hue);
+     }
     }
    }
   }
- }
+}
 updateBattle(dt){
  const alive=this.battle.filter(b=>b.alive);
  for(const b of alive){

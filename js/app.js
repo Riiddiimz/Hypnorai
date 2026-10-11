@@ -773,6 +773,178 @@ window.addEventListener('DOMContentLoaded', () => {
         multiply:['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
     };
+
+    // Configuration export/import: files are portable and can be shared or committed to GitHub.
+    const configVersion = 1;
+    const configFileInput = document.createElement('input');
+    configFileInput.type = 'file';
+    configFileInput.accept = '.json,application/json';
+    configFileInput.hidden = true;
+    document.body.appendChild(configFileInput);
+
+    const getModeConfig = (modeId) => {
+        const mode = sim.modes[modeId];
+        if (!mode) throw new Error('Mode inconnu : ' + modeId);
+        const modeSettings = {};
+        Object.keys(mode).forEach(key => {
+            const value = mode[key];
+            if (key !== 'sim' && key !== 'id' && key !== 'name' &&
+                (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') &&
+                Number.isFinite(typeof value === 'number' ? value : 0)) {
+                modeSettings[key] = value;
+            }
+        });
+        return {
+            format: 'hypnorai-mode-config',
+            version: configVersion,
+            exportedAt: new Date().toISOString(),
+            modeId,
+            modeName: mode.name || modeId,
+            physics: {
+                gravity: sim.gravity,
+                bounciness: sim.bounciness,
+                ballRadius: sim.ballRadius,
+                speedBoost: sim.speedBoost,
+                maxSpeed: sim.maxSpeed
+            },
+            modeSettings
+        };
+    };
+
+    const downloadJson = (data, filename) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    const modeNameForFile = id => String(id).replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+    const modeList = document.getElementById('modeButtons');
+    if (modeList) {
+        // Add a small export action alongside every mode button without changing the existing HTML list.
+        Array.from(modeList.querySelectorAll('.mode-btn')).forEach(modeButton => {
+            const modeId = modeButton.dataset.mode;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-stretch gap-1.5 min-w-0';
+            modeButton.parentNode.insertBefore(wrapper, modeButton);
+            wrapper.appendChild(modeButton);
+            modeButton.classList.add('flex-1', 'min-w-0');
+            const exportButton = document.createElement('button');
+            exportButton.type = 'button';
+            exportButton.className = 'shrink-0 w-9 rounded-xl border border-zinc-700 bg-zinc-800/80 text-cyan-300 hover:bg-cyan-500/15 hover:border-cyan-500/50 transition';
+            exportButton.title = 'Télécharger la configuration de ' + modeButton.innerText.trim();
+            exportButton.setAttribute('aria-label', exportButton.title);
+            exportButton.innerHTML = '<i class="fa-solid fa-download"></i>';
+            exportButton.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                try {
+                    downloadJson(getModeConfig(modeId), 'hypnorai-' + modeNameForFile(modeId) + '.json');
+                } catch (error) {
+                    alert('Impossible d’exporter cette configuration : ' + error.message);
+                }
+            });
+            wrapper.appendChild(exportButton);
+        });
+
+        const toolsRow = document.createElement('div');
+        toolsRow.className = 'grid grid-cols-2 gap-2 pt-2';
+        toolsRow.innerHTML = `
+            <button type="button" id="exportAllConfigBtn" class="py-2 px-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 text-[11px] font-semibold">
+                <i class="fa-solid fa-file-export mr-1"></i> Exporter tout
+            </button>
+            <button type="button" id="importConfigBtn" class="py-2 px-2 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20 text-[11px] font-semibold">
+                <i class="fa-solid fa-file-import mr-1"></i> Importer JSON
+            </button>`;
+        modeList.insertAdjacentElement('afterend', toolsRow);
+
+        document.getElementById('exportAllConfigBtn').addEventListener('click', () => {
+            const allModes = {};
+            Object.keys(sim.modes).forEach(id => { allModes[id] = getModeConfig(id); });
+            downloadJson({
+                format: 'hypnorai-full-config',
+                version: configVersion,
+                exportedAt: new Date().toISOString(),
+                activeModeId: sim.activeModeId,
+                physics: { gravity: sim.gravity, bounciness: sim.bounciness, ballRadius: sim.ballRadius, speedBoost: sim.speedBoost, maxSpeed: sim.maxSpeed },
+                modes: allModes,
+                visuals: { enableTrail: sim.enableTrail, enableParticles: sim.enableParticles, enableShockwaves: sim.enableShockwaves, enableScreenShake: sim.enableScreenShake },
+                audio: window.audioSynth ? { instrument: window.audioSynth.instrument, scaleName: window.audioSynth.scaleName, volume: window.audioSynth.volume, muted: window.audioSynth.muted } : null,
+                seed: sim.seed
+            }, 'hypnorai-config-complete.json');
+        });
+        document.getElementById('importConfigBtn').addEventListener('click', () => configFileInput.click());
+    }
+
+    const applyImportedConfig = data => {
+        if (!data || !['hypnorai-mode-config', 'hypnorai-full-config'].includes(data.format) || data.version !== configVersion) {
+            throw new Error('Format non reconnu ou version incompatible.');
+        }
+        const applyPhysics = values => {
+            if (!values || typeof values !== 'object') return;
+            ['gravity','bounciness','ballRadius','speedBoost','maxSpeed'].forEach(key => {
+                if (Number.isFinite(values[key]) && key in sim) sim[key] = values[key];
+            });
+        };
+        const applyOneMode = (id, config) => {
+            const mode = sim.modes[id];
+            if (!mode || !config || typeof config !== 'object') return;
+            const values = config.modeSettings || config;
+            Object.entries(values).forEach(([key, value]) => {
+                if (key === 'sim' || key === 'id' || key === 'name' || key === 'ownsPhysics' || key === 'ownsSpawning') return;
+                if (key in mode && ['string','number','boolean'].includes(typeof value) &&
+                    (typeof value !== 'number' || Number.isFinite(value))) mode[key] = value;
+            });
+        };
+        if (data.format === 'hypnorai-mode-config') {
+            if (!sim.modes[data.modeId]) throw new Error('Ce mode n’existe pas dans cette version : ' + data.modeId);
+            applyPhysics(data.physics);
+            applyOneMode(data.modeId, data);
+            selectMode(data.modeId);
+        } else {
+            applyPhysics(data.physics);
+            Object.entries(data.modes || {}).forEach(([id, config]) => applyOneMode(id, config));
+            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => { if (key in sim && typeof value === 'boolean') sim[key] = value; });
+            if (data.audio && window.audioSynth) {
+                if (typeof data.audio.instrument === 'string') window.audioSynth.instrument = data.audio.instrument;
+                if (typeof data.audio.scaleName === 'string') window.audioSynth.scaleName = data.audio.scaleName;
+                if (Number.isFinite(data.audio.volume)) window.audioSynth.volume = data.audio.volume;
+                if (typeof data.audio.muted === 'boolean') window.audioSynth.muted = data.audio.muted;
+            }
+            if (Number.isFinite(data.seed)) sim.seed = data.seed;
+            selectMode(sim.modes[data.activeModeId] ? data.activeModeId : sim.activeModeId);
+        }
+        // Refresh controls using their existing event handlers so labels and mode geometry stay in sync.
+        document.querySelectorAll('#leftSettingsContainer input, #leftSettingsContainer select, #rightSettingsContainer input, #rightSettingsContainer select').forEach(el => {
+            if (el.id === 'manualSeedInput') el.value = sim.seed;
+            if (el.type === 'checkbox') el.checked = !!el.checked;
+            el.dispatchEvent(new Event(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+        });
+        syncPhysicsUI();
+        syncFreezeUI();
+        sim.initMode();
+        if (typeof savePreferences === 'function') savePreferences();
+    };
+
+    configFileInput.addEventListener('change', async () => {
+        const file = configFileInput.files && configFileInput.files[0];
+        if (!file) return;
+        try {
+            const data = JSON.parse(await file.text());
+            applyImportedConfig(data);
+            alert('Configuration importée : ' + (data.modeName || 'configuration complète') + '.');
+        } catch (error) {
+            alert('Import impossible : ' + error.message);
+        } finally {
+            configFileInput.value = '';
+        }
+    });
+
     let skipPreferenceSave = false;
     const savePreferences = () => {
         if (skipPreferenceSave) return;

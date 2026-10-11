@@ -39,7 +39,9 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
   const cfg={gapSizeDeg:settings?.gapSizeDeg??this.gapSizeDeg,gapAngleDeg:settings?.gapAngleDeg??this.gapAngleDeg,ballSpeed:settings?.ballSpeed??this.ballSpeed,freezeInterval:settings?.freezeInterval??this.freezeInterval,gravity:settings?.gravity??this.sim.gravity,bounciness:settings?.bounciness??this.sim.bounciness};
   prng.setSeed(seed);
   const cx=this.sim.center.x,cy=this.sim.center.y;
-  const radius=Math.max(45,this.sim.boundaryRadius-22);
+  // Mirror updateGeometry(): the live mode clamps the effective boundary first.
+  const boundaryRadius=Math.max(65,this.sim.boundaryRadius);
+  const radius=Math.max(45,boundaryRadius-22);
   const ballRadius=this.sim.ballRadius||12;
   const gapCenter=cfg.gapAngleDeg*Math.PI/180,halfGap=cfg.gapSizeDeg*Math.PI/360;
   const angle=prng.random()*Math.PI*2;
@@ -64,7 +66,12 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
       if(d>=radius-ball.r){
         const a=Math.atan2(dy,dx);
         const fitsGap=Math.abs(Math.atan2(Math.sin(a-gapCenter),Math.cos(a-gapCenter)))<halfGap-Math.asin(Math.min(1,ball.r/Math.max(1,radius)));
-        if(fitsGap){if(d>radius+ball.r*1.5)return (frame+1)/60;}
+        if(fitsGap && d>radius+ball.r*1.5){
+          // Victory is triggered only once the ball has actually exited the circle.
+          // Simulation.update increments elapsedSeconds before the mode physics,
+          // so the displayed game time is the end of this frame.
+          return (frame+1)/60;
+        }
         else{
           const nx=dx/(d||1),ny=dy/(d||1);
           ball.x=cx+nx*(radius-ball.r);ball.y=cy+ny*(radius-ball.r);

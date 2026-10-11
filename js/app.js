@@ -240,6 +240,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const classicPalettePreview = document.getElementById('classicPalettePreview');
     if (classicPaletteSelect && sim.activeMode) {
         classicPaletteSelect.addEventListener('change', (e) => {
+            sim.paletteName = e.target.value;
             sim.modes.classic.paletteName = e.target.value;
             if (classicPalettePreview) classicPalettePreview.textContent = e.target.options[e.target.selectedIndex].text;
             sim.modes.classic.updateRingColors();
@@ -249,6 +250,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const classicMultiColorToggle = document.getElementById('classicMultiColorToggle');
     if (classicMultiColorToggle && sim.activeMode) {
         classicMultiColorToggle.addEventListener('change', lockScroll('rightSettingsContainer', (e) => {
+            sim.multiColor = e.target.checked;
             sim.modes.classic.multiColor = e.target.checked;
             sim.modes.classic.updateRingColors();
         }));
@@ -828,7 +830,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 activeModeId: sim.activeModeId,
                 physics: { gravity: sim.gravity, bounciness: sim.bounciness, ballRadius: sim.ballRadius, speedBoost: sim.speedBoost, maxSpeed: sim.maxSpeed },
                 modes: allModes,
-                visuals: { enableTrail: sim.enableTrail, enableParticles: sim.enableParticles, enableShockwaves: sim.enableShockwaves, enableScreenShake: sim.enableScreenShake, visualStyle: sim.visualStyle, backgroundTone: sim.backgroundTone, glowIntensity: sim.glowIntensity },
+                visuals: { enableTrail: sim.enableTrail, enableParticles: sim.enableParticles, enableShockwaves: sim.enableShockwaves, enableScreenShake: sim.enableScreenShake, visualStyle: sim.visualStyle, backgroundTone: sim.backgroundTone, glowIntensity: sim.glowIntensity, paletteName: sim.paletteName, multiColor: sim.multiColor },
                 audio: window.audioSynth ? { instrument: window.audioSynth.instrument, scaleName: window.audioSynth.scaleName, volume: window.audioSynth.volume, muted: window.audioSynth.muted } : null,
                 seed: sim.seed
             }, 'hypnorai-config-complete.json');
@@ -864,7 +866,9 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             applyPhysics(data.physics);
             Object.entries(data.modes || {}).forEach(([id, config]) => applyOneMode(id, config));
-            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => { if (['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(key) && typeof value === 'boolean') sim[key] = value; else if (key === 'visualStyle' && ['neon','soft','minimal'].includes(value)) sim[key] = value; else if (key === 'backgroundTone' && ['midnight','blue','black'].includes(value)) sim[key] = value; else if (key === 'glowIntensity' && Number.isFinite(value)) sim[key] = Math.max(0,Math.min(2,value)); });
+            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => { if (['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(key) && typeof value === 'boolean') sim[key] = value; else if (key === 'visualStyle' && ['neon','soft','minimal'].includes(value)) sim[key] = value; else if (key === 'backgroundTone' && ['midnight','blue','black'].includes(value)) sim[key] = value; else if (key === 'glowIntensity' && Number.isFinite(value)) sim[key] = Math.max(0,Math.min(2,value));
+                else if (key === 'paletteName' && ['neon','cyberpunk','ocean','sunset','candy','fire','rainbow'].includes(value)) { sim.paletteName = value; sim.modes.classic.paletteName = value; }
+                else if (key === 'multiColor' && typeof value === 'boolean') { sim.multiColor = value; sim.modes.classic.multiColor = value; } });
             if (data.audio && window.audioSynth) {
                 if (typeof data.audio.instrument === 'string') window.audioSynth.instrument = data.audio.instrument;
                 if (typeof data.audio.scaleName === 'string') window.audioSynth.scaleName = data.audio.scaleName;
@@ -902,8 +906,8 @@ window.addEventListener('DOMContentLoaded', () => {
             glowIntensitySlider.value = sim.glowIntensity;
             if (glowIntensityValue) glowIntensityValue.textContent = Math.round(sim.glowIntensity * 100) + '%';
         }
-        if (classicPaletteSelect) classicPaletteSelect.value = sim.modes.classic.paletteName;
-        if (classicMultiColorToggle) classicMultiColorToggle.checked = sim.modes.classic.multiColor;
+        if (classicPaletteSelect) classicPaletteSelect.value = sim.paletteName;
+        if (classicMultiColorToggle) classicMultiColorToggle.checked = sim.multiColor;
         syncPhysicsUI();
         sim.initMode();
         if (typeof savePreferences === 'function') savePreferences();
@@ -934,7 +938,7 @@ window.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(PREFS_KEY, JSON.stringify({
                 version:1, activeModeId:sim.activeModeId, controls, modes,
                 physics:{gravity:sim.gravity,bounciness:sim.bounciness,ballRadius:sim.ballRadius,speedBoost:sim.speedBoost},
-                visuals:{enableTrail:sim.enableTrail,enableParticles:sim.enableParticles,enableShockwaves:sim.enableShockwaves,enableScreenShake:sim.enableScreenShake,visualStyle:sim.visualStyle,backgroundTone:sim.backgroundTone,glowIntensity:sim.glowIntensity},
+                visuals:{enableTrail:sim.enableTrail,enableParticles:sim.enableParticles,enableShockwaves:sim.enableShockwaves,enableScreenShake:sim.enableScreenShake,visualStyle:sim.visualStyle,backgroundTone:sim.backgroundTone,glowIntensity:sim.glowIntensity,paletteName:sim.paletteName,multiColor:sim.multiColor},
                 seed:sim.seed,
                 audio:window.audioSynth?{instrument:window.audioSynth.instrument,scaleName:window.audioSynth.scaleName,volume:window.audioSynth.volume,muted:window.audioSynth.muted}:null
             }));
@@ -951,7 +955,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             Object.entries(data.controls||{}).forEach(([id,v])=>{const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=!!v;else el.value=v;}});
             Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
-            Object.entries(data.visuals||{}).forEach(([p,v])=>{if(['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(p)&&typeof v==='boolean')sim[p]=v;else if(p==='visualStyle'&&['neon','soft','minimal'].includes(v))sim[p]=v;else if(p==='backgroundTone'&&['midnight','blue','black'].includes(v))sim[p]=v;else if(p==='glowIntensity'&&Number.isFinite(v))sim[p]=Math.max(0,Math.min(2,v));});
+            Object.entries(data.visuals||{}).forEach(([p,v])=>{if(['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(p)&&typeof v==='boolean')sim[p]=v;else if(p==='visualStyle'&&['neon','soft','minimal'].includes(v))sim[p]=v;else if(p==='backgroundTone'&&['midnight','blue','black'].includes(v))sim[p]=v;else if(p==='glowIntensity'&&Number.isFinite(v))sim[p]=Math.max(0,Math.min(2,v));else if(p==='paletteName'&&['neon','cyberpunk','ocean','sunset','candy','fire','rainbow'].includes(v)){sim.paletteName=v;sim.modes.classic.paletteName=v;}else if(p==='multiColor'&&typeof v==='boolean'){sim.multiColor=v;sim.modes.classic.multiColor=v;}});
             if(data.audio&&window.audioSynth){
                 if(data.audio.instrument)window.audioSynth.instrument=data.audio.instrument;
                 if(data.audio.scaleName)window.audioSynth.scaleName=data.audio.scaleName;
@@ -968,7 +972,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(classicRingsSlider){classicRingsSlider.value=sim.modes.classic.ringCount;if(classicRingsVal)classicRingsVal.textContent=sim.modes.classic.ringCount;}
             if(classicRotationSlider){classicRotationSlider.value=sim.modes.classic.rotationMultiplier;if(classicRotationValue)classicRotationValue.textContent=Number(sim.modes.classic.rotationMultiplier).toFixed(2)+'x';}
             if(volumeSlider&&window.audioSynth){volumeSlider.value=Math.round(window.audioSynth.volume*100);if(volumeValue)volumeValue.textContent=volumeSlider.value+'%';}
-            if(visualStyleSelect)visualStyleSelect.value=sim.visualStyle;if(backgroundToneSelect)backgroundToneSelect.value=sim.backgroundTone;if(glowIntensitySlider){glowIntensitySlider.value=sim.glowIntensity;if(glowIntensityValue)glowIntensityValue.textContent=Math.round(sim.glowIntensity*100)+'%';}
+            if(visualStyleSelect)visualStyleSelect.value=sim.visualStyle;if(backgroundToneSelect)backgroundToneSelect.value=sim.backgroundTone;if(classicPaletteSelect)classicPaletteSelect.value=sim.paletteName;if(classicMultiColorToggle)classicMultiColorToggle.checked=sim.multiColor;if(classicPalettePreview&&classicPaletteSelect)classicPalettePreview.textContent=classicPaletteSelect.options[classicPaletteSelect.selectedIndex].text;if(glowIntensitySlider){glowIntensitySlider.value=sim.glowIntensity;if(glowIntensityValue)glowIntensityValue.textContent=Math.round(sim.glowIntensity*100)+'%';}
             ['trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle'].forEach(id=>{const el=document.getElementById(id);if(el&&data.controls&&typeof data.controls[id]==='boolean')el.checked=data.controls[id];});
             if(frameWrapper&&portraitToggle){frameWrapper.classList.toggle('aspect-[9/16]',portraitToggle.checked);frameWrapper.classList.toggle('max-w-[520px]',portraitToggle.checked);frameWrapper.classList.toggle('phone-frame',portraitToggle.checked);setTimeout(()=>sim.resize(),0);}
             if(spikeGroup&&classicSpikeToggle)spikeGroup.classList.toggle('hidden',!classicSpikeToggle.checked);

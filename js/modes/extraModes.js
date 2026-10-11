@@ -23,6 +23,62 @@ if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,
 }
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx=(b.vx-2*dot*nx)*this.sim.bounciness;b.vy=(b.vy-2*dot*ny)*this.sim.bounciness;this.sim.totalBounces++}}}
 }}
+evaluateSeed(seed,maxDuration=120,prng,settings=null){
+  if(this.id!=="accumulation")return null;
+  prng.setSeed(seed);
+  const cx=this.sim.center.x,cy=this.sim.center.y;
+  const radius=Math.max(45,this.sim.boundaryRadius-22);
+  const ballRadius=this.sim.ballRadius||12;
+  const gravity=this.sim.gravity;
+  const bounce=this.sim.bounciness;
+  const speed=this.ballSpeed||5.4;
+  const freezeInterval=Math.max(.1,this.freezeInterval||5);
+  const gapCenter=(this.gapAngleDeg||30)*Math.PI/180;
+  const halfGap=(this.gapSizeDeg||42)*Math.PI/360;
+  const angle=prng.random()*Math.PI*2;
+  prng.random(); // Match the live initial ball's hue draw.
+  let ball={x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:ballRadius};
+  const frozen=[];
+  let age=0;
+  const maxFrames=Math.floor(maxDuration*60);
+  for(let frame=0;frame<maxFrames;frame++){
+    age+=1/60;
+    for(let k=0;k<6;k++){
+      const step=1/6;
+      ball.vy+=gravity*step;
+      ball.x+=ball.vx*step;ball.y+=ball.vy*step;
+      const dx=ball.x-cx,dy=ball.y-cy,d=Math.hypot(dx,dy);
+      if(d>=radius-ball.r){
+        const a=Math.atan2(dy,dx);
+        const fitsGap=Math.abs(Math.atan2(Math.sin(a-gapCenter),Math.cos(a-gapCenter)))<halfGap-Math.asin(Math.min(1,ball.r/Math.max(1,radius)));
+        if(fitsGap){
+          if(d>radius+ball.r*1.5)return (frame+1)/60;
+        }else{
+          const nx=dx/(d||1),ny=dy/(d||1);
+          ball.x=cx+nx*(radius-ball.r);ball.y=cy+ny*(radius-ball.r);
+          const dot=ball.vx*nx+ball.vy*ny;
+          if(dot>0){ball.vx=(ball.vx-2*dot*nx)*bounce;ball.vy=(ball.vy-2*dot*ny)*bounce;}
+        }
+      }
+      for(const f of frozen){
+        const x=ball.x-f.x,y=ball.y-f.y,dist=Math.hypot(x,y);
+        if(dist<ball.r+f.r&&dist>.001){
+          const nx=x/dist,ny=y/dist;
+          ball.x=f.x+nx*(ball.r+f.r);ball.y=f.y+ny*(ball.r+f.r);
+          const dot=ball.vx*nx+ball.vy*ny;
+          if(dot<0){ball.vx=(ball.vx-2*dot*nx)*bounce;ball.vy=(ball.vy-2*dot*ny)*bounce;}
+        }
+      }
+    }
+    if(age>=freezeInterval){
+      frozen.push({x:ball.x,y:ball.y,r:ball.r});
+      ball={x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:ballRadius};
+      prng.random(); // Match the new ball's hue draw.
+      age=0;
+    }
+  }
+  return maxDuration;
+}
 updateMultiply(dt){
   const balls=this.sim.balls;
   for(const b of balls)b.radius=this.sim.ballRadius||13;

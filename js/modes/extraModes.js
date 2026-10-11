@@ -49,7 +49,14 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
   let age=0;
   const maxFrames=Math.floor(maxDuration*60);
   for(let frame=0;frame<maxFrames;frame++){
+    // Match ArcadeMode.update exactly: age advances and a ball freezes/respawns
+    // before this frame's physics substeps, not after them.
     age+=1/60;
+    if(age>=cfg.freezeInterval){
+      frozen.push({x:ball.x,y:ball.y,r:ball.r});
+      ball={x:cx,y:cy,vx:Math.cos(angle)*cfg.ballSpeed,vy:Math.sin(angle)*cfg.ballSpeed,r:ballRadius};
+      prng.random();age=0;
+    }
     for(let k=0;k<6;k++){
       const step=1/6;
       ball.vy+=cfg.gravity*step;ball.x+=ball.vx*step;ball.y+=ball.vy*step;
@@ -74,11 +81,6 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
           if(dot<0){ball.vx=(ball.vx-2*dot*nx)*cfg.bounciness;ball.vy=(ball.vy-2*dot*ny)*cfg.bounciness;}
         }
       }
-    }
-    if(age>=cfg.freezeInterval){
-      frozen.push({x:ball.x,y:ball.y,r:ball.r});
-      ball={x:cx,y:cy,vx:Math.cos(angle)*cfg.ballSpeed,vy:Math.sin(angle)*cfg.ballSpeed,r:ballRadius};
-      prng.random();age=0;
     }
   }
   return maxDuration;

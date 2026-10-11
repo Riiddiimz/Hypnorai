@@ -31,6 +31,9 @@ class Simulation {
         this.enableParticles = visuals ? visuals.enableParticles : true;
         this.enableShockwaves = visuals ? visuals.enableShockwaves : true;
         this.enableScreenShake = visuals ? visuals.enableScreenShake : false; // Disabled by default
+        this.visualStyle = 'neon';
+        this.backgroundTone = 'midnight';
+        this.glowIntensity = 1;
         this.screenShakeIntensity = 0;
 
         // Performance & Stats
@@ -311,7 +314,8 @@ class Simulation {
 
     draw() {
         // Clear background
-        this.ctx.fillStyle = '#080a10';
+        const backgrounds = { midnight: '#080a10', blue: '#07111f', black: '#000000' };
+        this.ctx.fillStyle = backgrounds[this.backgroundTone] || backgrounds.midnight;
         this.ctx.fillRect(0, 0, this.cssWidth, this.cssHeight);
 
         // Subtle background grid
@@ -326,6 +330,11 @@ class Simulation {
             this.ctx.translate(shakeX, shakeY);
         }
 
+        // Shared glow for modes that don't define their own shadow.
+        const styleGlow = this.visualStyle === 'minimal' ? 0 : this.visualStyle === 'soft' ? 0.45 : 1;
+        this.ctx.shadowBlur = this.glowIntensity * 8 * styleGlow;
+        this.ctx.shadowColor = this.activeMode && this.activeMode.color ? this.activeMode.color : '#22d3ee';
+
         // Render active mode boundaries
         if (this.activeMode && this.activeMode.render) {
             this.activeMode.render(this.ctx);
@@ -336,14 +345,15 @@ class Simulation {
         this.particles.forEach(p => p.draw(this.ctx));
 
         // Render Balls
-        this.balls.forEach(ball => ball.draw(this.ctx, this.enableTrail));
+        this.balls.forEach(ball => ball.draw(this.ctx, this.enableTrail, { visualStyle: this.visualStyle, glowIntensity: this.glowIntensity }));
 
         this.ctx.restore();
     }
 
     drawBackgroundGrid() {
         this.ctx.save();
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+        const gridAlpha = this.backgroundTone === 'black' ? '0.035' : this.backgroundTone === 'blue' ? '0.045' : '0.025';
+        this.ctx.strokeStyle = `rgba(180, 210, 255, ${gridAlpha})`;
         this.ctx.lineWidth = 1;
         const gridSize = 40;
         for (let x = 0; x < this.cssWidth; x += gridSize) {

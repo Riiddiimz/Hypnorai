@@ -1,5 +1,5 @@
 class ArcadeMode {
-constructor(sim,id){this.sim=sim;this.id=id;this.ownsPhysics=true;this.ownsSpawning=true;this.name=({accumulation:"Accumulation",multiply:"Multiply",battleLines:"Battle Lines",lines:"Lines",paint:"Paint",target:"Target",grow:"Grow",shatter:"Shatter",colorMatch:"Color Match",portal:"Portal"})[id];this.color="#00f2fe";this.radius=0;this.age=0;this.points=[];this.frozen=[];this.segments=[];this.portals=[];this.covered=0;this.battle=[];this.gapSizeDeg=42;this.gapAngleDeg=30;this.freezeInterval=5;this.ballSpeed=5.4;this.spawnPerBounce=1;this.initialBalls=2;this.radiusScale=1;this.ballCount=6;this.startingLines=5;this.wallLineGain=3;this.battleSpeed=4;this.lineSpreadDeg=7;this.hitCooldown={};}
+constructor(sim,id){this.sim=sim;this.id=id;this.ownsPhysics=true;this.ownsSpawning=true;this.name=({accumulation:"Accumulation",multiply:"Multiply",battleLines:"Battle Lines",lines:"Lines",paint:"Paint",target:"Target",grow:"Grow",shatter:"Shatter",colorMatch:"Color Match",portal:"Portal"})[id];this.color="#00f2fe";this.radius=0;this.age=0;this.points=[];this.frozen=[];this.segments=[];this.portals=[];this.covered=0;this.battle=[];this.gapSizeDeg=42;this.gapAngleDeg=30;this.freezeInterval=5;this.ballSpeed=5.4;this.spawnPerBounce=1;this.initialBalls=2;this.maxBalls=10000;this.radiusScale=1;this.ballCount=6;this.startingLines=5;this.wallLineGain=3;this.battleSpeed=4;this.lineSpreadDeg=7;this.hitCooldown={};}
 applySettings(s={}){Object.assign(this,s)} setTargetDuration(){} setupRings(){this.updateGeometry();this.age=0;this.points=[];this.frozen=[];this.segments=[];this.portals=[];this.battle=[];this.covered=0;this.hitCooldown={};}
 updateGeometry(){this.cx=this.sim.center.x;this.cy=this.sim.center.y;const baseRadius=Math.max(65,this.sim.boundaryRadius-22);this.radius=Math.max(45,baseRadius*(this.id==="multiply"?this.radiusScale:1))}
 initializeBalls(){this.updateGeometry();if(this.id==="battleLines"){for(let i=0;i<this.ballCount;i++){let a=i*Math.PI*2/this.ballCount;this.battle.push({x:this.cx+Math.cos(a)*this.radius*.4,y:this.cy+Math.sin(a)*this.radius*.4,vx:Math.cos(a+1)*this.battleSpeed,vy:Math.sin(a+1)*this.battleSpeed,lines:this.startingLines,hue:i*360/this.ballCount,alive:true,r:this.sim.ballRadius})}this.syncBattle();return}
@@ -34,8 +34,8 @@ updateMultiply(dt){
   }
   // Multiply only when two balls physically collide.
   const collisionCount=balls.length;
-  for(let i=0;i<collisionCount;i++){
-   for(let j=i+1;j<collisionCount;j++){
+  for(let i=0;i<collisionCount&&balls.length<this.maxBalls;i++){
+   for(let j=i+1;j<collisionCount&&balls.length<this.maxBalls;j++){
     const a=balls[i],b=balls[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.radius+b.radius;
     if(d<=0||d>=min)continue;
     const nx=dx/d,ny=dy/d;
@@ -47,7 +47,7 @@ updateMultiply(dt){
     if(closing<=0)continue;
     a.vx-=closing*nx;a.vy-=closing*ny;
     b.vx+=closing*nx;b.vy+=closing*ny;
-    for(let k=0;k<this.spawnPerBounce;k++){
+    for(let k=0;k<this.spawnPerBounce&&balls.length<this.maxBalls;k++){
      const angle=Math.atan2((a.vy+b.vy)/2,(a.vx+b.vx)/2)+(k%2===0?Math.PI/2:-Math.PI/2);
      const hue=(a.hue+(k+1)*55)%360;
      this.sim.spawnBall((a.x+b.x)/2+Math.cos(angle)*(min+2),(a.y+b.y)/2+Math.sin(angle)*(min+2),Math.cos(angle)*this.ballSpeed,Math.sin(angle)*this.ballSpeed,hue);

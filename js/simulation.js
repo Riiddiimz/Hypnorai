@@ -336,8 +336,9 @@ class Simulation {
         }
 
         // Zoom out visually in Multiply mode while keeping the physics world and ball sizes unchanged.
-        if (this.activeModeId === "multiply" && this.activeMode && this.activeMode.radius > this.boundaryRadius) {
-            const zoom = this.boundaryRadius / this.activeMode.radius;
+        if (this.activeModeId === "multiply") {
+            // Keep a constant zoom-out so changing diameter remains visibly meaningful.
+            const zoom = 0.65;
             this.ctx.translate(this.center.x, this.center.y);
             this.ctx.scale(zoom, zoom);
             this.ctx.translate(-this.center.x, -this.center.y);

@@ -66,13 +66,14 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
       if(d>=radius-ball.r){
         const a=Math.atan2(dy,dx);
         const fitsGap=Math.abs(Math.atan2(Math.sin(a-gapCenter),Math.cos(a-gapCenter)))<halfGap-Math.asin(Math.min(1,ball.r/Math.max(1,radius)));
-        if(fitsGap && d>radius+ball.r*1.5){
-          // Victory is triggered only once the ball has actually exited the circle.
-          // Simulation.update increments elapsedSeconds before the mode physics,
-          // so the displayed game time is the end of this frame.
-          return (frame+1)/60;
-        }
-        else{
+        if(fitsGap){
+          // In the live mode, the opening is not a wall: let the ball keep
+          // moving through it, and declare victory only after it exits.
+          if(d>radius+ball.r*1.5){
+            // Simulation.update increments elapsedSeconds before mode physics.
+            return (frame+1)/60;
+          }
+        } else {
           const nx=dx/(d||1),ny=dy/(d||1);
           ball.x=cx+nx*(radius-ball.r);ball.y=cy+ny*(radius-ball.r);
           const dot=ball.vx*nx+ball.vy*ny;

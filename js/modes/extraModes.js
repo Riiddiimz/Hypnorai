@@ -11,7 +11,7 @@ syncBattle(){this.sim.balls=this.battle.filter(b=>b.alive).map(s=>{let b=new Bal
 reflect(b,nx,ny){let d=b.vx*nx+b.vy*ny;if(d>0){b.vx=(b.vx-2*d*nx)*this.sim.bounciness;b.vy=(b.vy-2*d*ny)*this.sim.bounciness}}
 diff(a,b){return Math.atan2(Math.sin(a-b),Math.cos(a-b))}
 bounce(b,dx,dy,d){let nx=dx/(d||1),ny=dy/(d||1);b.x=this.cx+nx*(this.radius-b.radius);b.y=this.cy+ny*(this.radius-b.radius);this.reflect(b,nx,ny);this.sim.totalBounces++}
-update(dt){if(this.sim.isVictory)return;this.updateGeometry();if(this.id==="battleLines"){this.updateBattle(dt);return}if(this.id==="multiply"){this.updateMultiply(dt);return}if(this.id==="accumulation"){this.age+=dt/60;if(this.age>=this.freezeInterval&&this.active){const oldBall=this.active;this.frozen.push({x:oldBall.x,y:oldBall.y,r:oldBall.radius,h:oldBall.hue});this.active=new Ball(this.cx,this.cy,Math.cos(this.angle)*5.4,Math.sin(this.angle)*5.4,this.sim.ballRadius,Math.floor(this.sim.prng.random()*360));this.sim.balls=[this.active];this.age=0}}let b=this.active;if(!b)return;for(let k=0;k<6;k++){let step=dt/6;b.vy+=this.sim.gravity*step;b.x+=b.vx*step;b.y+=b.vy*step;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);if(d>=this.radius-b.radius){if(this.id==="accumulation"){const gapCenter=this.gapAngleDeg*Math.PI/180;const halfGap=this.gapSizeDeg*Math.PI/360;const ballAllowance=Math.asin(Math.min(1,b.radius/Math.max(1,this.radius)));const insideGap=Math.abs(this.diff(a,gapCenter))<halfGap-ballAllowance;if(insideGap){if(d>this.radius+b.radius*1.5){this.sim.triggerVictory();return}}else{this.bounce(b,dx,dy,d)}}else this.bounce(b,dx,dy,d);
+update(dt){if(this.sim.isVictory)return;this.updateGeometry();if(this.id==="battleLines"){this.updateBattle(dt);return}if(this.id==="multiply"){this.updateMultiply(dt);return}if(this.id==="accumulation"){this.age+=dt/60;if(this.age>=this.freezeInterval&&this.active){const oldBall=this.active;this.frozen.push({x:oldBall.x,y:oldBall.y,r:oldBall.radius,h:oldBall.hue});this.active=new Ball(this.cx,this.cy,Math.cos(this.angle)*this.ballSpeed,Math.sin(this.angle)*this.ballSpeed,this.sim.ballRadius,Math.floor(this.sim.prng.random()*360));this.sim.balls=[this.active];this.age=0}}let b=this.active;if(!b)return;for(let k=0;k<6;k++){let step=dt/6;b.vy+=this.sim.gravity*step;b.x+=b.vx*step;b.y+=b.vy*step;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx);if(d>=this.radius-b.radius){if(this.id==="accumulation"){const gapCenter=this.gapAngleDeg*Math.PI/180;const halfGap=this.gapSizeDeg*Math.PI/360;const ballAllowance=Math.asin(Math.min(1,b.radius/Math.max(1,this.radius)));const insideGap=Math.abs(this.diff(a,gapCenter))<halfGap-ballAllowance;if(insideGap){if(d>this.radius+b.radius*1.5){this.sim.triggerVictory();return}}else{this.bounce(b,dx,dy,d)}}else this.bounce(b,dx,dy,d);
 
 if(this.id==="lines")this.points.push({x:b.x,y:b.y,h:b.hue});
 if(this.id==="paint"){this.points.push({x:b.x,y:b.y,h:this.points.length*3%360});if(this.points.length>1500)this.points.shift();this.covered=Math.min(100,this.points.length/15)}
@@ -23,21 +23,28 @@ if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,
 }
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx=(b.vx-2*dot*nx)*this.sim.bounciness;b.vy=(b.vy-2*dot*ny)*this.sim.bounciness;this.sim.totalBounces++}}}
 }}
+searchParameterSets(targetDuration){
+  const sets=[];
+  const gaps=[30,42,55,70,85];
+  const speeds=[3.5,4.5,5.4,6.5,7.5];
+  const freezes=[2,3,4,5,7];
+  const gravities=[0.08,0.16,0.24,0.32];
+  for(const gapSizeDeg of gaps)for(const ballSpeed of speeds)for(const freezeInterval of freezes){
+    sets.push({gapSizeDeg,ballSpeed,freezeInterval,gravity:gravities[(gapSizeDeg+Math.round(ballSpeed*10)+freezeInterval)%gravities.length],gapAngleDeg:this.gapAngleDeg,bounciness:this.sim.bounciness});
+  }
+  return sets;
+}
 evaluateSeed(seed,maxDuration=120,prng,settings=null){
   if(this.id!=="accumulation")return null;
+  const cfg={gapSizeDeg:settings?.gapSizeDeg??this.gapSizeDeg,gapAngleDeg:settings?.gapAngleDeg??this.gapAngleDeg,ballSpeed:settings?.ballSpeed??this.ballSpeed,freezeInterval:settings?.freezeInterval??this.freezeInterval,gravity:settings?.gravity??this.sim.gravity,bounciness:settings?.bounciness??this.sim.bounciness};
   prng.setSeed(seed);
   const cx=this.sim.center.x,cy=this.sim.center.y;
   const radius=Math.max(45,this.sim.boundaryRadius-22);
   const ballRadius=this.sim.ballRadius||12;
-  const gravity=this.sim.gravity;
-  const bounce=this.sim.bounciness;
-  const speed=this.ballSpeed||5.4;
-  const freezeInterval=Math.max(.1,this.freezeInterval||5);
-  const gapCenter=(this.gapAngleDeg||30)*Math.PI/180;
-  const halfGap=(this.gapSizeDeg||42)*Math.PI/360;
+  const gapCenter=cfg.gapAngleDeg*Math.PI/180,halfGap=cfg.gapSizeDeg*Math.PI/360;
   const angle=prng.random()*Math.PI*2;
-  prng.random(); // Match the live initial ball's hue draw.
-  let ball={x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:ballRadius};
+  prng.random();
+  let ball={x:cx,y:cy,vx:Math.cos(angle)*cfg.ballSpeed,vy:Math.sin(angle)*cfg.ballSpeed,r:ballRadius};
   const frozen=[];
   let age=0;
   const maxFrames=Math.floor(maxDuration*60);
@@ -45,19 +52,17 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
     age+=1/60;
     for(let k=0;k<6;k++){
       const step=1/6;
-      ball.vy+=gravity*step;
-      ball.x+=ball.vx*step;ball.y+=ball.vy*step;
+      ball.vy+=cfg.gravity*step;ball.x+=ball.vx*step;ball.y+=ball.vy*step;
       const dx=ball.x-cx,dy=ball.y-cy,d=Math.hypot(dx,dy);
       if(d>=radius-ball.r){
         const a=Math.atan2(dy,dx);
         const fitsGap=Math.abs(Math.atan2(Math.sin(a-gapCenter),Math.cos(a-gapCenter)))<halfGap-Math.asin(Math.min(1,ball.r/Math.max(1,radius)));
-        if(fitsGap){
-          if(d>radius+ball.r*1.5)return (frame+1)/60;
-        }else{
+        if(fitsGap){if(d>radius+ball.r*1.5)return (frame+1)/60;}
+        else{
           const nx=dx/(d||1),ny=dy/(d||1);
           ball.x=cx+nx*(radius-ball.r);ball.y=cy+ny*(radius-ball.r);
           const dot=ball.vx*nx+ball.vy*ny;
-          if(dot>0){ball.vx=(ball.vx-2*dot*nx)*bounce;ball.vy=(ball.vy-2*dot*ny)*bounce;}
+          if(dot>0){ball.vx=(ball.vx-2*dot*nx)*cfg.bounciness;ball.vy=(ball.vy-2*dot*ny)*cfg.bounciness;}
         }
       }
       for(const f of frozen){
@@ -66,15 +71,14 @@ evaluateSeed(seed,maxDuration=120,prng,settings=null){
           const nx=x/dist,ny=y/dist;
           ball.x=f.x+nx*(ball.r+f.r);ball.y=f.y+ny*(ball.r+f.r);
           const dot=ball.vx*nx+ball.vy*ny;
-          if(dot<0){ball.vx=(ball.vx-2*dot*nx)*bounce;ball.vy=(ball.vy-2*dot*ny)*bounce;}
+          if(dot<0){ball.vx=(ball.vx-2*dot*nx)*cfg.bounciness;ball.vy=(ball.vy-2*dot*ny)*cfg.bounciness;}
         }
       }
     }
-    if(age>=freezeInterval){
+    if(age>=cfg.freezeInterval){
       frozen.push({x:ball.x,y:ball.y,r:ball.r});
-      ball={x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:ballRadius};
-      prng.random(); // Match the new ball's hue draw.
-      age=0;
+      ball={x:cx,y:cy,vx:Math.cos(angle)*cfg.ballSpeed,vy:Math.sin(angle)*cfg.ballSpeed,r:ballRadius};
+      prng.random();age=0;
     }
   }
   return maxDuration;

@@ -225,6 +225,25 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const classicGapModeSelect = document.getElementById('classicGapModeSelect');
+    const classicGapOffsetGroup = document.getElementById('classicGapOffsetGroup');
+    const classicGapOffsetSlider = document.getElementById('classicGapOffsetSlider');
+    const classicGapOffsetValue = document.getElementById('classicGapOffsetValue');
+    if (classicGapModeSelect && sim.modes.classic) {
+        classicGapModeSelect.addEventListener('change', (e) => {
+            sim.modes.classic.initialGapMode = e.target.value;
+            if (classicGapOffsetGroup) classicGapOffsetGroup.classList.toggle('hidden', e.target.value !== 'offset');
+            sim.modes.classic.setupRings(true);
+        });
+    }
+    if (classicGapOffsetSlider && sim.modes.classic) {
+        classicGapOffsetSlider.addEventListener('input', (e) => {
+            sim.modes.classic.gapOffset = Number(e.target.value);
+            if (classicGapOffsetValue) classicGapOffsetValue.textContent = `${sim.modes.classic.gapOffset}°`;
+            sim.modes.classic.setupRings(true);
+        });
+    }
+
     const classicGapSlider = document.getElementById('classicGapSlider');
     const classicGapVal = document.getElementById('classicGapVal');
     if (classicGapSlider && sim.activeMode) {
@@ -720,9 +739,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulDiameter','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapModeSelect','classicGapOffsetSlider','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulDiameter','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
-        classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
+        classic:['ringCount','rotationMultiplier','rotationDirection','initialGapMode','gapOffset','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
         accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
         multiply:['initialBalls','spawnPerBounce','radiusScale','maxBalls','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
@@ -740,7 +759,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const mode = sim.modes[modeId];
         if (!mode) throw new Error('Mode inconnu : ' + modeId);
         const modeSettingKeys = {
-            classic: ['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
+            classic: ['ringCount','rotationMultiplier','rotationDirection','initialGapMode','gapOffset','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
             accumulation: ['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
             multiply: ['initialBalls','spawnPerBounce','radiusScale','maxBalls','ballSpeed'],
             battleLines: ['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']

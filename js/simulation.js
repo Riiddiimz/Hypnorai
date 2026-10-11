@@ -192,7 +192,7 @@ class Simulation {
     }
 
     spawnBall(x, y, vx, vy, hue) {
-        if (this.balls.length >= 80) return;
+        if (this.activeModeId !== "multiply" && this.balls.length >= 80) return;
         vx = vx ?? ((this.prng.random() - 0.5) * 7);
         vy = vy ?? ((this.prng.random() - 0.5) * 5);
         hue = hue ?? Math.floor(this.prng.random() * 360);

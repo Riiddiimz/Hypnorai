@@ -528,6 +528,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Apply the seed and the matching settings together.
+                    if (result.settings && result.optimized && sim.activeModeId === 'accumulation') {
+                        applyAccumulationSettings(result.settings);
+                    }
                     if (result.settings && result.optimized && sim.activeModeId === 'classic') {
                         const m = sim.activeMode;
                         Object.assign(m, result.settings);

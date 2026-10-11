@@ -23,17 +23,30 @@ window.addEventListener('DOMContentLoaded', () => {
     // Render Loop (60 FPS normalized)
     const targetFrameTime = 1000 / 60;
     let lastFrameTime = 0;
+    let simulationAccumulator = 0;
 
     function animate(timestamp) {
         if (!lastFrameTime) lastFrameTime = timestamp;
-        const elapsed = timestamp - lastFrameTime;
+        // Fixed-step simulation: never speed up physics to compensate for a slow render frame.
+        // The seed evaluator simulates 60 fixed ticks per simulated second, so live play must do the same.
+        const elapsed = Math.min(timestamp - lastFrameTime, 250);
+        lastFrameTime = timestamp;
+        simulationAccumulator += elapsed;
 
-        if (elapsed >= targetFrameTime) {
-            sim.update(elapsed / targetFrameTime);
-            sim.draw();
-            lastFrameTime = timestamp;
+        let steps = 0;
+        const maxCatchUpSteps = 8;
+        while (simulationAccumulator >= targetFrameTime && steps < maxCatchUpSteps) {
+            sim.update(1);
+            simulationAccumulator -= targetFrameTime;
+            steps++;
         }
 
+        // If the tab/device falls far behind, discard excess backlog rather than fast-forwarding the game.
+        if (steps === maxCatchUpSteps && simulationAccumulator >= targetFrameTime) {
+            simulationAccumulator = simulationAccumulator % targetFrameTime;
+        }
+
+        sim.draw();
         requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);

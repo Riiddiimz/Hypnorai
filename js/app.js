@@ -785,14 +785,18 @@ window.addEventListener('DOMContentLoaded', () => {
     const getModeConfig = (modeId) => {
         const mode = sim.modes[modeId];
         if (!mode) throw new Error('Mode inconnu : ' + modeId);
+        const modeSettingKeys = {
+            classic: ['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
+            freezeCircle: ['gapSizeDeg','gapAngleDeg','positionX','positionY','ballSpeed'],
+            accumulation: ['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
+            multiply: ['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
+            battleLines: ['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
+        };
         const modeSettings = {};
-        Object.keys(mode).forEach(key => {
+        (modeSettingKeys[modeId] || []).forEach(key => {
             const value = mode[key];
-            if (key !== 'sim' && key !== 'id' && key !== 'name' &&
-                (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') &&
-                Number.isFinite(typeof value === 'number' ? value : 0)) {
-                modeSettings[key] = value;
-            }
+            if (typeof value === 'string' || typeof value === 'boolean' ||
+                (typeof value === 'number' && Number.isFinite(value))) modeSettings[key] = value;
         });
         return {
             format: 'hypnorai-mode-config',

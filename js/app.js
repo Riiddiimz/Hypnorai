@@ -978,7 +978,15 @@ window.addEventListener('DOMContentLoaded', () => {
             if(frameWrapper&&portraitToggle){frameWrapper.classList.toggle('aspect-[9/16]',portraitToggle.checked);frameWrapper.classList.toggle('max-w-[520px]',portraitToggle.checked);frameWrapper.classList.toggle('phone-frame',portraitToggle.checked);setTimeout(()=>sim.resize(),0);}
             if(spikeGroup&&classicSpikeToggle)spikeGroup.classList.toggle('hidden',!classicSpikeToggle.checked);
             if(manualSeedInput)manualSeedInput.value=sim.seed;
-            sim.initMode(); syncArcadeModePanel();
+            // Recalculer les dimensions après restauration (notamment si le layout vient de se recharger), puis replacer les balles dans la géométrie du mode actif.
+            sim.resize();
+            sim.initMode();
+            syncArcadeModePanel();
+            requestAnimationFrame(() => {
+                sim.resize();
+                sim.initMode();
+                syncArcadeModePanel();
+            });
         } catch(err) { console.warn('Restauration des préférences impossible.',err); }
     };
     document.addEventListener('input',savePreferences);

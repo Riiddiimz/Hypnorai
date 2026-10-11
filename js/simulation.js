@@ -105,6 +105,8 @@ class Simulation {
                 this.activeMode.ringCount = appCfg.world.ringCount;
                 this.activeMode.rotationMultiplier = appCfg.world.rotationSpeed;
                 this.activeMode.rotationDirection = appCfg.world.rotationDirection;
+                this.activeMode.initialGapMode = appCfg.world.initialGapMode || 'random';
+                this.activeMode.gapOffset = appCfg.world.gapOffset ?? 0;
                 this.activeMode.gapSize = Math.PI * appCfg.world.gapSizeRatio;
                 this.activeMode.paletteName = appCfg.world.palette;
                 this.activeMode.multiColor = appCfg.world.multiColor;

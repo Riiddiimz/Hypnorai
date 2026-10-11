@@ -965,7 +965,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(data.seed)sim.seed=parseInt(data.seed,10)||sim.seed;
             const wanted=sim.modes[data.activeModeId]?data.activeModeId:'classic';
             selectMode(wanted);
-            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulMax','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
+            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulDiameter','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
             ids.forEach(id=>{const el=document.getElementById(id);if(el)el.dispatchEvent(new Event(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',{bubbles:true}));});
             Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
             syncPhysicsUI();

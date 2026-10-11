@@ -24,10 +24,38 @@ if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx=(b.vx-2*dot*nx)*this.sim.bounciness;b.vy=(b.vy-2*dot*ny)*this.sim.bounciness;this.sim.totalBounces++}}}
 }}
 updateMultiply(dt){for(const b of [...this.sim.balls]){if(this.sim.balls.length>=this.maxBalls)break;b.vy+=this.sim.gravity*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);if(d>=this.radius-b.radius){this.bounce(b,dx,dy,d);for(let j=0;j<this.spawnPerBounce&&this.sim.balls.length<this.maxBalls;j++){let a=Math.atan2(b.vy,b.vx)+(j%2?-.65:.65);this.sim.spawnBall(b.x,b.y,Math.cos(a)*5,Math.sin(a)*5,(b.hue+j*55)%360);}}}this.sim.balls=this.sim.balls.slice(0,this.maxBalls)}
-updateBattle(dt){let alive=this.battle.filter(b=>b.alive);for(let b of alive){b.x+=b.vx*dt;b.y+=b.vy*dt;let x=b.x-this.cx,y=b.y-this.cy,d=Math.hypot(x,y);if(d>this.radius-b.r){let nx=x/d,ny=y/d;b.x=this.cx+nx*(this.radius-b.r);b.y=this.cy+ny*(this.radius-b.r);this.reflect(b,nx,ny);b.lines+=this.wallLineGain}}
-for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){let a=alive[i],b=alive[j];if(Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r){a.lines--;b.lines--;}
-const touchesLine=(ball,owner)=>{if(owner.lines<=0)return false;const ang=Math.atan2(owner.y-this.cy,owner.x-this.cx);for(let k=0;k<owner.lines;k++){const aa=ang+(k-(owner.lines-1)/2)*(this.lineSpreadDeg*Math.PI/180);const ex=this.cx+Math.cos(aa)*this.radius,ey=this.cy+Math.sin(aa)*this.radius;const vx=ex-owner.x,vy=ey-owner.y,t=Math.max(0,Math.min(1,((ball.x-owner.x)*vx+(ball.y-owner.y)*vy)/(vx*vx+vy*vy||1)));const px=owner.x+vx*t,py=owner.y+vy*t;if(Math.hypot(ball.x-px,ball.y-py)<ball.r+1){owner.lines--;return true;}}return false;};touchesLine(a,b);touchesLine(b,a);}
-for(let b of alive)if(b.lines<=0)b.alive=false;this.syncBattle();if(this.battle.filter(b=>b.alive).length===1)this.sim.triggerVictory()}
+updateBattle(dt){
+ const alive=this.battle.filter(b=>b.alive);
+ for(const b of alive){
+  b.x+=b.vx*dt;b.y+=b.vy*dt;
+  const x=b.x-this.cx,y=b.y-this.cy,d=Math.hypot(x,y);
+  if(d>this.radius-b.r){const nx=x/(d||1),ny=y/(d||1);b.x=this.cx+nx*(this.radius-b.r);b.y=this.cy+ny*(this.radius-b.r);this.reflect(b,nx,ny);b.lines+=this.wallLineGain;}
+ }
+ // Collisions between balls are elastic and do not consume lines.
+ for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){
+  const a=alive[i],b=alive[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.r+b.r;
+  if(d>0&&d<min){const nx=dx/d,ny=dy/d,rel=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
+   if(rel>0){a.vx-=rel*nx;a.vy-=rel*ny;b.vx+=rel*nx;b.vy+=rel*ny;}
+   const overlap=(min-d)/2;a.x-=nx*overlap;a.y-=ny*overlap;b.x+=nx*overlap;b.y+=ny*overlap;
+  }
+ }
+ // A ball touching another ball's radial line removes one line, at most once per contact.
+ for(const ball of alive)for(const owner of alive){
+  if(owner===ball||owner.lines<=0)continue;
+  const ang=Math.atan2(owner.y-this.cy,owner.x-this.cx);
+  for(let k=0;k<owner.lines;k++){
+   const aa=ang+(k-(owner.lines-1)/2)*(this.lineSpreadDeg*Math.PI/180);
+   const ex=this.cx+Math.cos(aa)*this.radius,ey=this.cy+Math.sin(aa)*this.radius;
+   const vx=ex-owner.x,vy=ey-owner.y,t=Math.max(0,Math.min(1,((ball.x-owner.x)*vx+(ball.y-owner.y)*vy)/(vx*vx+vy*vy||1)));
+   const px=owner.x+vx*t,py=owner.y+vy*t,key=owner.hue+":"+k+":"+ball.hue;
+   const touching=Math.hypot(ball.x-px,ball.y-py)<ball.r+1;
+   if(touching&&!this.hitCooldown[key]){owner.lines--;this.hitCooldown[key]=true;break;}
+   if(!touching)this.hitCooldown[key]=false;
+  }
+ }
+ for(const b of alive)if(b.lines<=0)b.alive=false;
+ this.syncBattle();if(this.battle.filter(b=>b.alive).length===1)this.sim.triggerVictory();
+}
 handleCollision(){}
 render(ctx){this.updateGeometry();ctx.save();ctx.strokeStyle=this.color;ctx.lineWidth=3;ctx.beginPath();if(this.id==="accumulation"){const ga=this.gapAngleDeg*Math.PI/180,gh=this.gapSizeDeg*Math.PI/360;ctx.arc(this.cx,this.cy,this.radius,ga+gh,ga-gh+Math.PI*2);}else ctx.arc(this.cx,this.cy,this.radius,0,Math.PI*2);ctx.stroke();
 if(this.id==="lines")for(let p of this.points){ctx.beginPath();ctx.moveTo(this.cx,this.cy);ctx.lineTo(p.x,p.y);ctx.strokeStyle="hsla("+p.h+",100%,65%,.4)";ctx.stroke()}

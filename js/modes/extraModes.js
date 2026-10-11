@@ -1,7 +1,7 @@
 class ArcadeMode {
 constructor(sim,id){this.sim=sim;this.id=id;this.ownsPhysics=true;this.ownsSpawning=true;this.name=({accumulation:"Accumulation",multiply:"Multiply",battleLines:"Battle Lines",lines:"Lines",paint:"Paint",target:"Target",grow:"Grow",shatter:"Shatter",colorMatch:"Color Match",portal:"Portal"})[id];this.color="#00f2fe";this.radius=0;this.age=0;this.points=[];this.frozen=[];this.segments=[];this.portals=[];this.covered=0;this.battle=[];this.gapSizeDeg=42;this.gapAngleDeg=30;this.freezeInterval=5;this.ballSpeed=5.4;this.spawnPerBounce=1;this.initialBalls=2;this.maxBalls=10;this.radiusScale=1;this.ballCount=6;this.startingLines=5;this.wallLineGain=3;this.battleSpeed=4;this.lineSpreadDeg=7;this.hitCooldown={};}
 applySettings(s={}){Object.assign(this,s)} setTargetDuration(){} setupRings(){this.updateGeometry();this.age=0;this.points=[];this.frozen=[];this.segments=[];this.portals=[];this.battle=[];this.covered=0;this.hitCooldown={};}
-updateGeometry(){this.cx=this.sim.center.x;this.cy=this.sim.center.y;const boundaryRadius=Math.max(65,this.sim.boundaryRadius);const isMultiply=this.id==="multiply";const baseRadius=isMultiply?Math.max(45,boundaryRadius*.68):Math.max(45,boundaryRadius-22);const requestedRadius=baseRadius*(isMultiply?this.radiusScale:1);const maxVisibleRadius=Math.max(30,boundaryRadius-(isMultiply?4:Math.max(4,this.sim.ballRadius||0)));this.radius=isMultiply?Math.min(maxVisibleRadius,Math.max(30,requestedRadius)):Math.max(45,requestedRadius)}
+updateGeometry(){this.cx=this.sim.center.x;this.cy=this.sim.center.y;const boundaryRadius=Math.max(65,this.sim.boundaryRadius);const isMultiply=this.id==="multiply";const baseRadius=isMultiply?Math.max(45,boundaryRadius*1.05):Math.max(45,boundaryRadius-22);const requestedRadius=baseRadius*(isMultiply?Math.max(.7,Number(this.radiusScale)||100)/100:1);const maxVisibleRadius=Math.max(30,boundaryRadius-Math.max(4,this.sim.ballRadius||0));this.radius=isMultiply?Math.max(30,requestedRadius):Math.max(45,requestedRadius)}
 initializeBalls(){this.updateGeometry();if(this.id==="battleLines"){for(let i=0;i<this.ballCount;i++){let a=i*Math.PI*2/this.ballCount;this.battle.push({x:this.cx+Math.cos(a)*this.radius*.4,y:this.cy+Math.sin(a)*this.radius*.4,vx:Math.cos(a+1)*this.battleSpeed,vy:Math.sin(a+1)*this.battleSpeed,lines:this.startingLines,hue:i*360/this.ballCount,alive:true,r:this.sim.ballRadius})}this.syncBattle();return}
 let a=this.sim.prng.random()*Math.PI*2;this.angle=a;this.active=new Ball(this.cx,this.cy,Math.cos(a)*this.ballSpeed,Math.sin(a)*this.ballSpeed,this.sim.ballRadius,Math.floor(this.sim.prng.random()*360));this.sim.balls=[this.active];if(this.id==="multiply"){for(let i=1;i<this.initialBalls;i++){const q=this.sim.prng.random()*Math.PI*2;const offset=18+Math.floor(i/6)*this.sim.ballRadius*2;this.sim.spawnBall(this.cx+Math.cos(q)*offset,this.cy+Math.sin(q)*offset,Math.cos(q)*this.ballSpeed,Math.sin(q)*this.ballSpeed,Math.floor(this.sim.prng.random()*360));}}
 if(this.id==="target")for(let i=0;i<12;i++)this.segments.push({a:i*Math.PI/6,alive:true,n:i+1});
@@ -25,9 +25,8 @@ for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radiu
 }}
 updateMultiply(dt){
   const balls=this.sim.balls;
-  // Larger circles use proportionally smaller balls to preserve playable space.
-  const ballRadius=Math.max(3,(this.sim.ballRadius||13)/Math.max(1,this.radiusScale));
-  for(const b of balls)b.radius=ballRadius;
+  // Keep the user-selected ball size unchanged in Multiply mode.
+  for(const b of balls)b.radius=this.sim.ballRadius||13;
   // Movement and rebounds on the circle never create balls.
   for(const b of [...balls]){
    b.vy+=this.sim.gravity*dt;

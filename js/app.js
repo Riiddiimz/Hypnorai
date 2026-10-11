@@ -150,6 +150,40 @@ window.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // Mode Settings Controls (Left Sidebar)
     // =========================================================================
+    // Réglages spécifiques aux modes arcade
+    const arcadeControls = [
+        ['accGapSize','gapSizeDeg','accGapSizeVal',v=>v+'°'],
+        ['accGapAngle','gapAngleDeg','accGapAngleVal',v=>v+'°'+(Number(v)===30?' (2h)':'')],
+        ['accFreeze','freezeInterval','accFreezeVal',v=>v+' s'],
+        ['accSpeed','ballSpeed','accSpeedVal',v=>Number(v).toFixed(1)],
+        ['mulInitial','initialBalls','mulInitialVal',v=>v],
+        ['mulSpawn','spawnPerBounce','mulSpawnVal',v=>v],
+        ['mulMax','maxBalls','mulMaxVal',v=>v],
+        ['mulSpeed','ballSpeed','mulSpeedVal',v=>v],
+        ['battleCount','ballCount','battleCountVal',v=>v],
+        ['battleLines','startingLines','battleLinesVal',v=>v],
+        ['battleGain','wallLineGain','battleGainVal',v=>v],
+        ['battleSpeed','battleSpeed','battleSpeedVal',v=>v],
+        ['battleSpread','lineSpreadDeg','battleSpreadVal',v=>v+'°']
+    ];
+    const syncArcadeModePanel = () => {
+        const id=sim.activeModeId;
+        document.getElementById('accumulationOptions')?.classList.toggle('hidden',id!=='accumulation');
+        document.getElementById('multiplyOptions')?.classList.toggle('hidden',id!=='multiply');
+        document.getElementById('battleOptions')?.classList.toggle('hidden',id!=='battleLines');
+    };
+    arcadeControls.forEach(([id,prop,labelId,format])=>{
+        const el=document.getElementById(id); if(!el)return;
+        el.addEventListener('input',()=>{
+            const mode=sim.activeMode;if(!mode)return;
+            mode[prop]=Number(el.value);
+            const label=document.getElementById(labelId);if(label)label.textContent=format(el.value);
+            if(['mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','accFreeze','accSpeed'].includes(id))sim.initMode();
+        });
+    });
+    document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(syncArcadeModePanel,0)));
+    syncArcadeModePanel();
+
     const classicRingsSlider = document.getElementById('classicRingsSlider');
     const classicRingsVal = document.getElementById('classicRingsVal');
     if (classicRingsSlider && sim.activeMode) {

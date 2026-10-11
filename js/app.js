@@ -341,6 +341,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const manualSeedInput = document.getElementById('manualSeedInput');
     const applySeedBtn = document.getElementById('applySeedBtn');
     const copySeedBtn = document.getElementById('copySeedBtn');
+    const autoOptimizeSeedToggle = document.getElementById('autoOptimizeSeedToggle');
 
     function updateTargetDuration(newSec) {
         targetDuration = parseInt(newSec, 10);
@@ -391,9 +392,16 @@ window.addEventListener('DOMContentLoaded', () => {
                 targetDuration,
                 // On progress
                 (progress) => {
+                    if (progress.unsupported) {
+                        if (bestCandidateDisplay) bestCandidateDisplay.textContent = progress.message;
+                        findSeedBtnText.textContent = `Trouver la Seed (${targetDuration}s)`;
+                        findSeedBtn.classList.remove('searching-active');
+                        return;
+                    }
                     if (searchCountDisplay) searchCountDisplay.textContent = progress.testedCount.toLocaleString();
                     if (bestCandidateDisplay) {
-                        bestCandidateDisplay.textContent = `Seed #${progress.bestSeed} (${progress.bestDuration.toFixed(1)}s)`;
+                        const settingsLabel = progress.settings && progress.optimized ? ' · options auto' : '';
+                        bestCandidateDisplay.textContent = progress.bestSeed ? `Seed #${progress.bestSeed} (${progress.bestDuration.toFixed(1)}s)${settingsLabel}` : 'Recherche en cours…';
                     }
                 },
                 // On exact match found
@@ -405,10 +413,29 @@ window.addEventListener('DOMContentLoaded', () => {
                         bestCandidateDisplay.textContent = `✓ Trouvée: Seed #${result.seed} (${result.duration.toFixed(1)}s)`;
                     }
 
-                    // Apply the winning seed to simulation
+                    // Apply the seed and the matching settings together.
+                    if (result.settings && result.optimized && sim.activeModeId === 'classic') {
+                        const m = sim.activeMode;
+                        Object.assign(m, result.settings);
+                        sim.gravity = result.settings.gravity ?? sim.gravity;
+                        if (classicRingsSlider) classicRingsSlider.value = m.ringCount;
+                        if (classicRotationSlider) classicRotationSlider.value = m.rotationMultiplier;
+                        if (classicDirSelect) classicDirSelect.value = m.rotationDirection;
+                        if (classicGapSlider) classicGapSlider.value = m.gapSize / Math.PI;
+                        if (gravitySlider) gravitySlider.value = sim.gravity;
+                        [classicRingsSlider, classicRotationSlider, classicDirSelect, classicGapSlider, gravitySlider].forEach(el => {
+                            if (el) el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+                        });
+                        m.ringCount = result.settings.ringCount;
+                        m.rotationMultiplier = result.settings.rotationMultiplier;
+                        m.gapSize = result.settings.gapSize;
+                        m.rotationDirection = result.settings.rotationDirection;
+                        sim.gravity = result.settings.gravity;
+                    }
                     if (manualSeedInput) manualSeedInput.value = result.seed;
                     sim.setSeed(result.seed);
-                }
+                },
+                { autoOptimize: !!(autoOptimizeSeedToggle && autoOptimizeSeedToggle.checked) }
             );
         });
     }
@@ -683,7 +710,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
         classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
         freezeCircle:['gapSizeDeg','gapAngleDeg','positionX','positionY','ballSpeed'],

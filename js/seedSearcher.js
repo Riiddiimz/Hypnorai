@@ -26,17 +26,19 @@ class SeedSearcher {
     }
 
     // Fast Headless simulation of a single seed
-    evaluateSeed(seed, maxDuration = 120) {
+    evaluateSeed(seed, maxDuration = 120, settings = null) {
         const mode = this.sim.activeMode;
-        if (mode.evaluateSeed) return mode.evaluateSeed(seed, maxDuration, this.prng);
+        if (mode.evaluateSeed) return mode.evaluateSeed(seed, maxDuration, this.prng, settings);
+        // The built-in fast evaluator below models Classic Escape only.
+        if (mode.id && mode.id !== 'classic') return null;
         this.prng.setSeed(seed);
-        const count = mode.ringCount || 6;
+        const count = settings?.ringCount ?? mode.ringCount ?? 6;
         const maxRadius = Math.max(30, this.sim.boundaryRadius - 6);
         const innerRadius = Math.max(22, Math.min(65, this.sim.boundaryRadius * 0.24));
         const spacing = count > 1 ? (maxRadius - innerRadius) / (count - 1) : 0;
-        const gapSize = mode.gapSize;
-        const rotMultiplier = mode.rotationMultiplier;
-        const rotDir = mode.rotationDirection;
+        const gapSize = settings?.gapSize ?? mode.gapSize;
+        const rotMultiplier = settings?.rotationMultiplier ?? mode.rotationMultiplier;
+        const rotDir = settings?.rotationDirection ?? mode.rotationDirection;
 
         // Rings setup
         const rings = [];
@@ -66,9 +68,9 @@ class SeedSearcher {
             radius: this.sim.ballRadius
         };
 
-        const gravity = this.sim.gravity;
-        const bounciness = this.sim.bounciness;
-        const speedBoost = this.sim.speedBoost;
+        const gravity = settings?.gravity ?? this.sim.gravity;
+        const bounciness = settings?.bounciness ?? this.sim.bounciness;
+        const speedBoost = settings?.speedBoost ?? this.sim.speedBoost;
         const maxSpeed = this.sim.maxSpeed;
 
         const dtScale = 1.0;
@@ -146,10 +148,30 @@ class SeedSearcher {
         return maxDuration; // Did not finish within limit
     }
 
-    startSearch(targetDuration, onProgress, onFound) {
+    startSearch(targetDuration, onProgress, onFound, options = {}) {
         this.stopSearch();
         const m = this.sim.activeMode;
         if (m.setTargetDuration) m.setTargetDuration(targetDuration);
+        if (m.id && m.id !== 'classic' && !m.evaluateSeed) {
+            if (onProgress) onProgress({ unsupported: true, message: 'La recherche de durée exacte n’a pas encore de simulateur dédié pour ce mode.' });
+            return;
+        }
+        this.autoOptimize = !!options.autoOptimize && (!m.id || m.id === 'classic' || typeof m.searchParameterSets === 'function');
+        this.searchSettings = [];
+        if (this.autoOptimize) {
+            if (typeof m.searchParameterSets === 'function') {
+                this.searchSettings = m.searchParameterSets(targetDuration) || [];
+            } else {
+                const ringCounts = [4, 5, 6, 7, 8, 9];
+                const rotations = [0.06, 0.09, 0.12, 0.16, 0.22, 0.28];
+                const gaps = [0.22, 0.28, 0.34, 0.40, 0.46, 0.52].map(v => Math.PI * v);
+                const gravity = [0.12, 0.18, 0.24, 0.30];
+                for (const rings of ringCounts) for (const rotation of rotations) {
+                    const gap = gaps[(rings + Math.round(rotation * 100)) % gaps.length];
+                    this.searchSettings.push({ ringCount: rings, rotationMultiplier: rotation, gapSize: gap, rotationDirection: m.rotationDirection || 'alternate', gravity: gravity[(rings + Math.round(rotation * 100)) % gravity.length] });
+                }
+            }
+        }
         this.tolerance = m.searchTolerance ?? 0.45;
 
         this.targetDuration = targetDuration;
@@ -175,13 +197,22 @@ class SeedSearcher {
                 this.currentSeedCandidate++;
                 this.testedCount++;
 
-                const duration = this.evaluateSeed(this.currentSeedCandidate, maxDurationLimit);
+                const settings = this.autoOptimize && this.searchSettings.length
+                    ? this.searchSettings[this.testedCount % this.searchSettings.length]
+                    : null;
+                const duration = this.evaluateSeed(this.currentSeedCandidate, maxDurationLimit, settings);
+                if (duration === null || !Number.isFinite(duration)) {
+                    this.isSearching = false;
+                    if (this.onProgress) this.onProgress({ unsupported: true, message: 'Ce mode ne possède pas encore de simulateur de recherche de seed.' });
+                    return;
+                }
                 const diff = Math.abs(duration - this.targetDuration);
 
                 if (diff < this.bestDiff) {
                     this.bestDiff = diff;
                     this.bestSeed = this.currentSeedCandidate;
                     this.bestDuration = duration;
+                    this.bestSettings = settings ? { ...settings } : null;
                 }
 
                 // Match found within tolerance threshold!
@@ -191,6 +222,8 @@ class SeedSearcher {
                         this.onFound({
                             seed: this.currentSeedCandidate,
                             duration: duration,
+                            settings: settings ? { ...settings } : null,
+                            optimized: this.autoOptimize,
                             testedCount: this.testedCount
                         });
                     }
@@ -203,7 +236,9 @@ class SeedSearcher {
                     testedCount: this.testedCount,
                     bestSeed: this.bestSeed,
                     bestDuration: this.bestDuration,
-                    bestDiff: this.bestDiff
+                    bestDiff: this.bestDiff,
+                    settings: this.bestSettings || null,
+                    optimized: this.autoOptimize
                 });
             }
 

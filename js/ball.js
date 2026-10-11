@@ -26,7 +26,9 @@ class Ball {
         this.hue = (this.hue + 0.4) % 360;
     }
 
-    draw(ctx, enableTrail) {
+    draw(ctx, enableTrail, style = {}) {
+        const glowScale = style.visualStyle === 'minimal' ? 0 : style.visualStyle === 'soft' ? 0.4 : 1;
+        const glowBlur = Math.max(0, (style.glowIntensity ?? 1) * 18 * glowScale);
         // Glowing Trail
         if (enableTrail && this.trail.length > 1) {
             for (let i = 0; i < this.trail.length - 1; i++) {
@@ -38,7 +40,7 @@ class Ball {
                 ctx.moveTo(p1.x, p1.y);
                 ctx.lineTo(p2.x, p2.y);
                 ctx.strokeStyle = `hsla(${p1.hue}, 100%, 60%, ${alpha})`;
-                ctx.lineWidth = (i / this.trail.length) * (this.radius * 1.6);
+                ctx.lineWidth = (i / this.trail.length) * (this.radius * (style.visualStyle === 'minimal' ? 0.8 : 1.6));
                 ctx.lineCap = 'round';
                 ctx.stroke();
             }
@@ -47,7 +49,7 @@ class Ball {
         // Glowing Ball Body
         ctx.save();
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = glowBlur;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;

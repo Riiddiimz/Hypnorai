@@ -888,6 +888,12 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             applyPhysics(data.physics);
             Object.entries(data.modes || {}).forEach(([id, config]) => applyOneMode(id, config));
+            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => {
+                if (['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(key) && typeof value === 'boolean') sim[key] = value;
+                else if (key === 'visualStyle' && ['neon','soft','minimal'].includes(value)) sim[key] = value;
+                else if (key === 'backgroundTone' && ['midnight','blue','black'].includes(value)) sim[key] = value;
+                else if (key === 'glowIntensity' && Number.isFinite(value)) sim[key] = Math.max(0,Math.min(2,value));
+            });
             selectMode(sim.modes[data.activeModeId] ? data.activeModeId : sim.activeModeId);
         }
         syncPhysicsUI();

@@ -240,17 +240,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const classicPalettePreview = document.getElementById('classicPalettePreview');
     if (classicPaletteSelect && sim.activeMode) {
         classicPaletteSelect.addEventListener('change', (e) => {
-            sim.activeMode.paletteName = e.target.value;
+            sim.modes.classic.paletteName = e.target.value;
             if (classicPalettePreview) classicPalettePreview.textContent = e.target.options[e.target.selectedIndex].text;
-            sim.activeMode.updateRingColors();
+            sim.modes.classic.updateRingColors();
         });
     }
 
     const classicMultiColorToggle = document.getElementById('classicMultiColorToggle');
     if (classicMultiColorToggle && sim.activeMode) {
-        classicMultiColorToggle.addEventListener('change', lockScroll('leftSettingsContainer', (e) => {
-            sim.activeMode.multiColor = e.target.checked;
-            sim.activeMode.updateRingColors();
+        classicMultiColorToggle.addEventListener('change', lockScroll('rightSettingsContainer', (e) => {
+            sim.modes.classic.multiColor = e.target.checked;
+            sim.modes.classic.updateRingColors();
         }));
     }
 
@@ -560,6 +560,17 @@ window.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // Right Sidebar Controls : Visual FX
     // =========================================================================
+
+    const visualStyleSelect = document.getElementById('visualStyleSelect');
+    const backgroundToneSelect = document.getElementById('backgroundToneSelect');
+    const glowIntensitySlider = document.getElementById('glowIntensitySlider');
+    const glowIntensityValue = document.getElementById('glowIntensityValue');
+    if (visualStyleSelect) visualStyleSelect.addEventListener('change', e => { sim.visualStyle = e.target.value; });
+    if (backgroundToneSelect) backgroundToneSelect.addEventListener('change', e => { sim.backgroundTone = e.target.value; });
+    if (glowIntensitySlider) glowIntensitySlider.addEventListener('input', e => {
+        sim.glowIntensity = parseFloat(e.target.value);
+        if (glowIntensityValue) glowIntensityValue.textContent = Math.round(sim.glowIntensity * 100) + '%';
+    });
     const trailToggle = document.getElementById('trailToggle');
     if (trailToggle) {
         trailToggle.addEventListener('change', lockScroll('rightSettingsContainer', (e) => {
@@ -706,7 +717,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
         classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
         accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
@@ -817,7 +828,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 activeModeId: sim.activeModeId,
                 physics: { gravity: sim.gravity, bounciness: sim.bounciness, ballRadius: sim.ballRadius, speedBoost: sim.speedBoost, maxSpeed: sim.maxSpeed },
                 modes: allModes,
-                visuals: { enableTrail: sim.enableTrail, enableParticles: sim.enableParticles, enableShockwaves: sim.enableShockwaves, enableScreenShake: sim.enableScreenShake },
+                visuals: { enableTrail: sim.enableTrail, enableParticles: sim.enableParticles, enableShockwaves: sim.enableShockwaves, enableScreenShake: sim.enableScreenShake, visualStyle: sim.visualStyle, backgroundTone: sim.backgroundTone, glowIntensity: sim.glowIntensity },
                 audio: window.audioSynth ? { instrument: window.audioSynth.instrument, scaleName: window.audioSynth.scaleName, volume: window.audioSynth.volume, muted: window.audioSynth.muted } : null,
                 seed: sim.seed
             }, 'hypnorai-config-complete.json');
@@ -853,7 +864,7 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             applyPhysics(data.physics);
             Object.entries(data.modes || {}).forEach(([id, config]) => applyOneMode(id, config));
-            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => { if (key in sim && typeof value === 'boolean') sim[key] = value; });
+            if (data.visuals) Object.entries(data.visuals).forEach(([key,value]) => { if (['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(key) && typeof value === 'boolean') sim[key] = value; else if (key === 'visualStyle' && ['neon','soft','minimal'].includes(value)) sim[key] = value; else if (key === 'backgroundTone' && ['midnight','blue','black'].includes(value)) sim[key] = value; else if (key === 'glowIntensity' && Number.isFinite(value)) sim[key] = Math.max(0,Math.min(2,value)); });
             if (data.audio && window.audioSynth) {
                 if (typeof data.audio.instrument === 'string') window.audioSynth.instrument = data.audio.instrument;
                 if (typeof data.audio.scaleName === 'string') window.audioSynth.scaleName = data.audio.scaleName;
@@ -909,7 +920,7 @@ window.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(PREFS_KEY, JSON.stringify({
                 version:1, activeModeId:sim.activeModeId, controls, modes,
                 physics:{gravity:sim.gravity,bounciness:sim.bounciness,ballRadius:sim.ballRadius,speedBoost:sim.speedBoost},
-                visuals:{enableTrail:sim.enableTrail,enableParticles:sim.enableParticles,enableShockwaves:sim.enableShockwaves,enableScreenShake:sim.enableScreenShake},
+                visuals:{enableTrail:sim.enableTrail,enableParticles:sim.enableParticles,enableShockwaves:sim.enableShockwaves,enableScreenShake:sim.enableScreenShake,visualStyle:sim.visualStyle,backgroundTone:sim.backgroundTone,glowIntensity:sim.glowIntensity},
                 seed:sim.seed,
                 audio:window.audioSynth?{instrument:window.audioSynth.instrument,scaleName:window.audioSynth.scaleName,volume:window.audioSynth.volume,muted:window.audioSynth.muted}:null
             }));
@@ -926,7 +937,7 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             Object.entries(data.controls||{}).forEach(([id,v])=>{const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=!!v;else el.value=v;}});
             Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
-            Object.entries(data.visuals||{}).forEach(([p,v])=>{if(p in sim)sim[p]=!!v;});
+            Object.entries(data.visuals||{}).forEach(([p,v])=>{if(['enableTrail','enableParticles','enableShockwaves','enableScreenShake'].includes(p)&&typeof v==='boolean')sim[p]=v;else if(p==='visualStyle'&&['neon','soft','minimal'].includes(v))sim[p]=v;else if(p==='backgroundTone'&&['midnight','blue','black'].includes(v))sim[p]=v;else if(p==='glowIntensity'&&Number.isFinite(v))sim[p]=Math.max(0,Math.min(2,v));});
             if(data.audio&&window.audioSynth){
                 if(data.audio.instrument)window.audioSynth.instrument=data.audio.instrument;
                 if(data.audio.scaleName)window.audioSynth.scaleName=data.audio.scaleName;
@@ -943,6 +954,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(classicRingsSlider){classicRingsSlider.value=sim.modes.classic.ringCount;if(classicRingsVal)classicRingsVal.textContent=sim.modes.classic.ringCount;}
             if(classicRotationSlider){classicRotationSlider.value=sim.modes.classic.rotationMultiplier;if(classicRotationValue)classicRotationValue.textContent=Number(sim.modes.classic.rotationMultiplier).toFixed(2)+'x';}
             if(volumeSlider&&window.audioSynth){volumeSlider.value=Math.round(window.audioSynth.volume*100);if(volumeValue)volumeValue.textContent=volumeSlider.value+'%';}
+            if(visualStyleSelect)visualStyleSelect.value=sim.visualStyle;if(backgroundToneSelect)backgroundToneSelect.value=sim.backgroundTone;if(glowIntensitySlider){glowIntensitySlider.value=sim.glowIntensity;if(glowIntensityValue)glowIntensityValue.textContent=Math.round(sim.glowIntensity*100)+'%';}
             ['trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle'].forEach(id=>{const el=document.getElementById(id);if(el&&data.controls&&typeof data.controls[id]==='boolean')el.checked=data.controls[id];});
             if(frameWrapper&&portraitToggle){frameWrapper.classList.toggle('aspect-[9/16]',portraitToggle.checked);frameWrapper.classList.toggle('max-w-[520px]',portraitToggle.checked);frameWrapper.classList.toggle('phone-frame',portraitToggle.checked);setTimeout(()=>sim.resize(),0);}
             if(spikeGroup&&classicSpikeToggle)spikeGroup.classList.toggle('hidden',!classicSpikeToggle.checked);

@@ -655,12 +655,8 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =========================================================================
-    // Mode Freeze Circle : sélection, réglages et valeurs par défaut
-    // =========================================================================
+    // Sélection du mode et synchronisation des réglages communs.
     const classicBox = document.getElementById('classicSettingsBox');
-    const freezeBox = document.getElementById('freezeCircleSettingsBox');
-    const freezeMode = () => sim.modes.freezeCircle;
 
     function syncPhysicsUI() {
         if (gravitySlider) gravitySlider.value = sim.gravity;
@@ -673,58 +669,6 @@ window.addEventListener('DOMContentLoaded', () => {
         if (speedBoostVal) speedBoostVal.textContent = `+${Math.round((sim.speedBoost - 1) * 100)}%`;
     }
 
-    const freezeGapSize = document.getElementById('freezeGapSizeSlider');
-    const freezeGapSizeVal = document.getElementById('freezeGapSizeVal');
-    const freezeGapAngle = document.getElementById('freezeGapAngleSlider');
-    const freezeGapAngleVal = document.getElementById('freezeGapAngleVal');
-    const freezePosX = document.getElementById('freezePosXSlider');
-    const freezePosXVal = document.getElementById('freezePosXVal');
-    const freezePosY = document.getElementById('freezePosYSlider');
-    const freezePosYVal = document.getElementById('freezePosYVal');
-    const freezeSpeed = document.getElementById('freezeSpeedSlider');
-    const freezeSpeedVal = document.getElementById('freezeSpeedVal');
-
-    function syncFreezeUI() {
-        const m = freezeMode();
-        if (freezeGapSize) freezeGapSize.value = m.gapSizeDeg;
-        if (freezeGapSizeVal) freezeGapSizeVal.textContent = `${m.gapSizeDeg}°`;
-        if (freezeGapAngle) freezeGapAngle.value = m.gapAngleDeg;
-        if (freezeGapAngleVal) freezeGapAngleVal.textContent = `${m.gapAngleDeg}°`;
-        if (freezePosX) freezePosX.value = m.positionX;
-        if (freezePosXVal) freezePosXVal.textContent = `${m.positionX}%`;
-        if (freezePosY) freezePosY.value = m.positionY;
-        if (freezePosYVal) freezePosYVal.textContent = `${m.positionY}%`;
-        if (freezeSpeed) freezeSpeed.value = m.ballSpeed;
-        if (freezeSpeedVal) freezeSpeedVal.textContent = m.ballSpeed.toFixed(1);
-    }
-
-    const bindFreeze = (el, evt, fn) => {
-        if (el) el.addEventListener(evt, (e) => {
-            fn(e);
-            sim.initMode();
-        });
-    };
-    bindFreeze(freezeGapSize, 'input', e => {
-        freezeMode().gapSizeDeg = parseFloat(e.target.value);
-        freezeGapSizeVal.textContent = `${freezeMode().gapSizeDeg}°`;
-    });
-    bindFreeze(freezeGapAngle, 'input', e => {
-        freezeMode().gapAngleDeg = parseFloat(e.target.value);
-        freezeGapAngleVal.textContent = `${freezeMode().gapAngleDeg}°`;
-    });
-    bindFreeze(freezePosX, 'input', e => {
-        freezeMode().positionX = parseFloat(e.target.value);
-        freezePosXVal.textContent = `${freezeMode().positionX}%`;
-    });
-    bindFreeze(freezePosY, 'input', e => {
-        freezeMode().positionY = parseFloat(e.target.value);
-        freezePosYVal.textContent = `${freezeMode().positionY}%`;
-    });
-    bindFreeze(freezeSpeed, 'input', e => {
-        freezeMode().ballSpeed = parseFloat(e.target.value);
-        freezeSpeedVal.textContent = freezeMode().ballSpeed.toFixed(1);
-    });
-
     function selectMode(id) {
         sim.setMode(id);
         document.querySelectorAll('#modeButtons .mode-btn').forEach(b => {
@@ -734,13 +678,11 @@ window.addEventListener('DOMContentLoaded', () => {
             if (badge) badge.textContent = on ? 'Actif' : 'Choisir';
         });
         if (classicBox) classicBox.classList.toggle('hidden', id !== 'classic');
-        if (freezeBox) freezeBox.classList.toggle('hidden', id !== 'freezeCircle');
         if (findSeedBtn) findSeedBtn.classList.remove('searching-active');
         if (seedSearchStatusBox) seedSearchStatusBox.classList.add('hidden');
         updateTargetDuration(65);
         sim.activeMode.setTargetDuration && sim.activeMode.setTargetDuration(targetDuration);
         syncPhysicsUI();
-        syncFreezeUI();
         if (manualSeedInput) manualSeedInput.value = sim.seed;
     }
     document.querySelectorAll('#modeButtons .mode-btn').forEach(btn => {
@@ -753,7 +695,6 @@ window.addEventListener('DOMContentLoaded', () => {
         freshBtn.addEventListener('click', () => {
             sim.applyModeDefaults();
             syncPhysicsUI();
-            syncFreezeUI();
             if (sim.activeModeId === 'classic') {
                 if (classicRingsSlider) classicRingsSlider.value = sim.activeMode.ringCount;
                 if (classicRingsVal) classicRingsVal.textContent = sim.activeMode.ringCount;
@@ -765,10 +706,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
         classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
-        freezeCircle:['gapSizeDeg','gapAngleDeg','positionX','positionY','ballSpeed'],
         accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
         multiply:['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
@@ -787,7 +727,6 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!mode) throw new Error('Mode inconnu : ' + modeId);
         const modeSettingKeys = {
             classic: ['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
-            freezeCircle: ['gapSizeDeg','gapAngleDeg','positionX','positionY','ballSpeed'],
             accumulation: ['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
             multiply: ['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
             battleLines: ['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
@@ -941,7 +880,6 @@ window.addEventListener('DOMContentLoaded', () => {
             selectMode(sim.modes[data.activeModeId] ? data.activeModeId : sim.activeModeId);
         }
         syncPhysicsUI();
-        syncFreezeUI();
         sim.initMode();
         if (typeof savePreferences === 'function') savePreferences();
     };
@@ -998,10 +936,10 @@ window.addEventListener('DOMContentLoaded', () => {
             if(data.seed)sim.seed=parseInt(data.seed,10)||sim.seed;
             const wanted=sim.modes[data.activeModeId]?data.activeModeId:'classic';
             selectMode(wanted);
-            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],freezeCircle:['freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulMax','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
+            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulMax','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
             ids.forEach(id=>{const el=document.getElementById(id);if(el)el.dispatchEvent(new Event(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',{bubbles:true}));});
             Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
-            syncPhysicsUI(); syncFreezeUI();
+            syncPhysicsUI();
             if(classicRingsSlider){classicRingsSlider.value=sim.modes.classic.ringCount;if(classicRingsVal)classicRingsVal.textContent=sim.modes.classic.ringCount;}
             if(classicRotationSlider){classicRotationSlider.value=sim.modes.classic.rotationMultiplier;if(classicRotationValue)classicRotationValue.textContent=Number(sim.modes.classic.rotationMultiplier).toFixed(2)+'x';}
             if(volumeSlider&&window.audioSynth){volumeSlider.value=Math.round(window.audioSynth.volume*100);if(volumeValue)volumeValue.textContent=volumeSlider.value+'%';}

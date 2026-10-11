@@ -7,7 +7,7 @@
 const MODES_CONFIG = {
     classic: {
         id: 'classic',
-        name: 'Classic Escape',
+        name: 'Escape',
         badge: 'Actif',
         description: 'La balle rebondit à l\'intérieur d\'anneaux rotatifs et cherche la brèche pour s\'échapper.',
         icon: 'fa-circle-notch',
@@ -34,33 +34,6 @@ const MODES_CONFIG = {
             spikeCount: 8,
             spikeLength: 16,
             spikeWidth: 0.12
-        }
-    },
-
-    freezeCircle: {
-        id: 'freezeCircle',
-        name: 'Freeze Circle',
-        badge: 'Nouveau',
-        description: 'Un cercle fixe avec une ouverture : une balle rebondit 5 s, se fige, puis la suivante repart dans la même direction.',
-        icon: 'fa-circle-dot',
-        color: '#00f2fe',
-
-        ballPhysics: {
-            gravity: 0,
-            bounciness: 1.00,
-            ballRadius: 12,
-            speedBoost: 1.00,
-            maxSpeed: 20
-        },
-
-        modeSettings: {
-            ringRadiusRatio: 0.72,
-            gapSizeDeg: 42,
-            gapAngleDeg: -90,
-            positionX: 0,
-            positionY: 0,
-            ballSpeed: 5.2,
-            freezeInterval: 5
         }
     },
 

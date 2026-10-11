@@ -341,6 +341,46 @@ window.addEventListener('DOMContentLoaded', () => {
     const manualSeedInput = document.getElementById('manualSeedInput');
     const applySeedBtn = document.getElementById('applySeedBtn');
     const copySeedBtn = document.getElementById('copySeedBtn');
+    const playBestSeedBtn = document.getElementById('playBestSeedBtn');
+    
+    function applySeedCandidate(seed, settings = null, optimized = false) {
+        if (!Number.isFinite(Number(seed))) return;
+        if (settings && optimized && sim.activeModeId === 'classic') {
+            const m = sim.activeMode;
+            Object.assign(m, settings);
+            sim.gravity = settings.gravity ?? sim.gravity;
+            if (classicRingsSlider) classicRingsSlider.value = m.ringCount;
+            if (classicRotationSlider) classicRotationSlider.value = m.rotationMultiplier;
+            if (classicDirSelect) classicDirSelect.value = m.rotationDirection;
+            if (classicGapSlider) classicGapSlider.value = m.gapSize / Math.PI;
+            if (gravitySlider) gravitySlider.value = sim.gravity;
+            [classicRingsSlider, classicRotationSlider, classicDirSelect, classicGapSlider, gravitySlider].forEach(el => {
+                if (el) el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+            });
+            Object.assign(m, settings);
+            sim.gravity = settings.gravity ?? sim.gravity;
+        }
+        if (manualSeedInput) manualSeedInput.value = seed;
+        sim.setSeed(Number(seed));
+    }
+
+    if (playBestSeedBtn) {
+        playBestSeedBtn.addEventListener('click', () => {
+            const searcher = sim.seedSearcher;
+            if (!searcher || searcher.bestSeed == null) return;
+            const seed = searcher.bestSeed;
+            const duration = searcher.bestDuration;
+            const settings = searcher.bestSettings;
+            const optimized = !!searcher.autoOptimize;
+            searcher.stopSearch();
+            findSeedBtnText.textContent = `Trouver la Seed (${targetDuration}s)`;
+            findSeedBtn.classList.remove('searching-active');
+            applySeedCandidate(seed, settings, optimized);
+            if (bestCandidateDisplay) bestCandidateDisplay.textContent = `Seed lancée #${seed} (${Number(duration).toFixed(1)}s)`;
+            playBestSeedBtn.disabled = true;
+        });
+    }
+
     const autoOptimizeSeedToggle = document.getElementById('autoOptimizeSeedToggle');
 
     function updateTargetDuration(newSec) {
@@ -398,6 +438,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         findSeedBtn.classList.remove('searching-active');
                         return;
                     }
+                    if (playBestSeedBtn) playBestSeedBtn.disabled = progress.bestSeed == null;
                     if (searchCountDisplay) searchCountDisplay.textContent = progress.testedCount.toLocaleString();
                     if (bestCandidateDisplay) {
                         const settingsLabel = progress.settings && progress.optimized ? ' · options auto' : '';
@@ -408,6 +449,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 (result) => {
                     findSeedBtnText.textContent = `Trouver la Seed (${targetDuration}s)`;
                     findSeedBtn.classList.remove('searching-active');
+                    if (playBestSeedBtn) playBestSeedBtn.disabled = true;
                     if (searchCountDisplay) searchCountDisplay.textContent = result.testedCount.toLocaleString();
                     if (bestCandidateDisplay) {
                         bestCandidateDisplay.textContent = `✓ Trouvée: Seed #${result.seed} (${result.duration.toFixed(1)}s)${result.optimized ? ' · options optimisées' : ''}`;

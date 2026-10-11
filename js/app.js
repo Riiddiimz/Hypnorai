@@ -680,4 +680,75 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Persistance locale des réglages utilisateur
+    const PREFS_KEY = 'hypnorai.preferences.v1';
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput'];
+    const modePreferenceProps = {
+        classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
+        freezeCircle:['gapSizeDeg','gapAngleDeg','positionX','positionY','ballSpeed'],
+        accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
+        multiply:['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
+        battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
+    };
+    const savePreferences = () => {
+        try {
+            const controls = {};
+            preferenceIds.forEach(id => { const el=document.getElementById(id); if(el) controls[id]=el.type==='checkbox'?el.checked:el.value; });
+            const modes = {};
+            Object.entries(modePreferenceProps).forEach(([id,props]) => { const m=sim.modes[id]; if(m){ modes[id]={}; props.forEach(p=>{if(m[p]!==undefined)modes[id][p]=m[p];}); } });
+            localStorage.setItem(PREFS_KEY, JSON.stringify({
+                version:1, activeModeId:sim.activeModeId, controls, modes,
+                physics:{gravity:sim.gravity,bounciness:sim.bounciness,ballRadius:sim.ballRadius,speedBoost:sim.speedBoost},
+                visuals:{enableTrail:sim.enableTrail,enableParticles:sim.enableParticles,enableShockwaves:sim.enableShockwaves,enableScreenShake:sim.enableScreenShake},
+                seed:sim.seed,
+                audio:window.audioSynth?{instrument:window.audioSynth.instrument,scaleName:window.audioSynth.scaleName,volume:window.audioSynth.volume,muted:window.audioSynth.muted}:null
+            }));
+            const status=document.getElementById('preferencesStatus'); if(status) status.textContent='Réglages sauvegardés automatiquement';
+        } catch(err) { console.warn('Sauvegarde des préférences impossible.',err); }
+    };
+    const loadPreferences = () => {
+        let data; try { data=JSON.parse(localStorage.getItem(PREFS_KEY)||'null'); } catch(_) { return; }
+        if(!data||data.version!==1) return;
+        try {
+            Object.entries(data.modes||{}).forEach(([id,values])=>{
+                const m=sim.modes[id]; if(!m||!modePreferenceProps[id]) return;
+                Object.entries(values).forEach(([p,v])=>{if(modePreferenceProps[id].includes(p))m[p]=v;});
+            });
+            Object.entries(data.controls||{}).forEach(([id,v])=>{const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=!!v;else el.value=v;}});
+            Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
+            Object.entries(data.visuals||{}).forEach(([p,v])=>{if(p in sim)sim[p]=!!v;});
+            if(data.audio&&window.audioSynth){
+                if(data.audio.instrument)window.audioSynth.instrument=data.audio.instrument;
+                if(data.audio.scaleName)window.audioSynth.scaleName=data.audio.scaleName;
+                if(Number.isFinite(data.audio.volume))window.audioSynth.volume=data.audio.volume;
+                if(typeof data.audio.muted==='boolean')window.audioSynth.muted=data.audio.muted;
+            }
+            if(data.seed)sim.seed=parseInt(data.seed,10)||sim.seed;
+            const wanted=sim.modes[data.activeModeId]?data.activeModeId:'classic';
+            selectMode(wanted);
+            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],freezeCircle:['freezeGapSizeSlider','freezeGapAngleSlider','freezePosXSlider','freezePosYSlider','freezeSpeedSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulMax','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
+            ids.forEach(id=>{const el=document.getElementById(id);if(el)el.dispatchEvent(new Event(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',{bubbles:true}));});
+            Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
+            syncPhysicsUI(); syncFreezeUI();
+            if(classicRingsSlider){classicRingsSlider.value=sim.modes.classic.ringCount;if(classicRingsVal)classicRingsVal.textContent=sim.modes.classic.ringCount;}
+            if(classicRotationSlider){classicRotationSlider.value=sim.modes.classic.rotationMultiplier;if(classicRotationValue)classicRotationValue.textContent=Number(sim.modes.classic.rotationMultiplier).toFixed(2)+'x';}
+            if(volumeSlider&&window.audioSynth){volumeSlider.value=Math.round(window.audioSynth.volume*100);if(volumeValue)volumeValue.textContent=volumeSlider.value+'%';}
+            ['trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle'].forEach(id=>{const el=document.getElementById(id);if(el&&data.controls&&typeof data.controls[id]==='boolean')el.checked=data.controls[id];});
+            if(frameWrapper&&portraitToggle){frameWrapper.classList.toggle('aspect-[9/16]',portraitToggle.checked);frameWrapper.classList.toggle('max-w-[520px]',portraitToggle.checked);frameWrapper.classList.toggle('phone-frame',portraitToggle.checked);setTimeout(()=>sim.resize(),0);}
+            if(spikeGroup&&classicSpikeToggle)spikeGroup.classList.toggle('hidden',!classicSpikeToggle.checked);
+            if(manualSeedInput)manualSeedInput.value=sim.seed;
+            sim.initMode(); syncArcadeModePanel();
+        } catch(err) { console.warn('Restauration des préférences impossible.',err); }
+    };
+    document.addEventListener('input',savePreferences,true);
+    document.addEventListener('change',savePreferences,true);
+    window.addEventListener('beforeunload',savePreferences);
+    const clearPreferencesBtn=document.getElementById('clearPreferencesBtn');
+    if(clearPreferencesBtn)clearPreferencesBtn.addEventListener('click',()=>{
+        try{localStorage.removeItem(PREFS_KEY);}catch(_){}
+        const status=document.getElementById('preferencesStatus');if(status)status.textContent='Préférences effacées — recharge la page pour retrouver les réglages d’origine.';
+    });
+    loadPreferences();
+
 });

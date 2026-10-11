@@ -26,7 +26,9 @@ const MODES_CONFIG = {
         modeSettings: {
             ringCount: 6,
             rotationMultiplier: 0.12,
-            rotationDirection: 'alternate', // 'alternate' | 'clockwise' | 'counter'
+            rotationDirection: 'alternate',
+            initialGapMode: 'random',
+            gapOffset: 0, // 'alternate' | 'clockwise' | 'counter'
             gapSizeRatio: 0.45,
             paletteName: 'neon',
             multiColor: true,

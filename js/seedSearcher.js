@@ -144,7 +144,7 @@ class SeedSearcher {
             if (onProgress) onProgress({ unsupported: true, message: 'La recherche de durée exacte n’a pas encore de simulateur dédié pour ce mode.' });
             return;
         }
-        this.autoOptimize = !!options.autoOptimize && (!m.id || m.id === 'classic' || typeof m.searchParameterSets === 'function');
+        this.autoOptimize = (!!options.autoOptimize || m.id === 'accumulation') && (!m.id || m.id === 'classic' || typeof m.searchParameterSets === 'function');
         this.searchSettings = [];
         if (this.autoOptimize) {
             if (typeof m.searchParameterSets === 'function') {

@@ -47,13 +47,27 @@ class SeedSearcher {
         const ballRadius = this.sim.ballRadius;
 
         const rings = [];
+        // Mirror ClassicMode.setupRings(): ring gaps consume seeded PRNG values
+        // before the ball's vx, vy and hue are initialized.
         for (let i = 0; i < count; i++) {
             const sign = rotationDirection === 'alternate'
                 ? (i % 2 === 0 ? 1 : -1)
                 : rotationDirection === 'counter' ? -1 : 1;
+            let initialAngle;
+            const initialGapMode = settings?.initialGapMode ?? mode.initialGapMode ?? 'random';
+            const gapOffset = settings?.gapOffset ?? mode.gapOffset ?? 0;
+            if (initialGapMode === 'random') {
+                initialAngle = this.prng.random() * Math.PI * 2;
+            } else if (initialGapMode === 'offset') {
+                initialAngle = i * gapOffset * Math.PI / 180;
+            } else if (initialGapMode === 'alternate') {
+                initialAngle = (i % 2) * Math.PI;
+            } else {
+                initialAngle = this.prng.random() * Math.PI * 2;
+            }
             rings.push({
                 radius: Math.min(maxRadius, innerRadius + i * spacing),
-                gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + i * 0.65,
+                gapAngle: initialAngle,
                 gapSize,
                 rotationSpeed: sign * (0.22 + i * 0.04),
                 active: true
@@ -118,6 +132,9 @@ class SeedSearcher {
 
                     if (Math.abs(relAngle) <= ring.gapSize / 2) {
                         ring.active = false;
+                        // Live ClassicMode triggers victory immediately when the last
+                        // ring clears, without waiting for the ball to cross the boundary.
+                        if (rings.every(r => !r.active)) return (frame + 1) / 60;
                     } else {
                         const nx = dx / Math.max(dist, 0.001);
                         const ny = dy / Math.max(dist, 0.001);

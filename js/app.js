@@ -896,6 +896,14 @@ window.addEventListener('DOMContentLoaded', () => {
             });
             selectMode(sim.modes[data.activeModeId] ? data.activeModeId : sim.activeModeId);
         }
+        if (visualStyleSelect) visualStyleSelect.value = sim.visualStyle;
+        if (backgroundToneSelect) backgroundToneSelect.value = sim.backgroundTone;
+        if (glowIntensitySlider) {
+            glowIntensitySlider.value = sim.glowIntensity;
+            if (glowIntensityValue) glowIntensityValue.textContent = Math.round(sim.glowIntensity * 100) + '%';
+        }
+        if (classicPaletteSelect) classicPaletteSelect.value = sim.modes.classic.paletteName;
+        if (classicMultiColorToggle) classicMultiColorToggle.checked = sim.modes.classic.multiColor;
         syncPhysicsUI();
         sim.initMode();
         if (typeof savePreferences === 'function') savePreferences();

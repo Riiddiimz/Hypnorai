@@ -255,17 +255,18 @@ class ClassicMode {
             ctx.beginPath();
             ctx.arc(this.sim.center.x, this.sim.center.y, ring.radius, start, end);
             ctx.strokeStyle = color;
-            ctx.lineWidth = 7;
+            const styleGlow = this.sim.visualStyle === 'minimal' ? 0 : this.sim.visualStyle === 'soft' ? 0.45 : 1;
+            ctx.lineWidth = this.sim.visualStyle === 'minimal' ? 3.5 : this.sim.visualStyle === 'soft' ? 5 : 7;
             ctx.lineCap = 'round';
             ctx.shadowColor = color;
-            ctx.shadowBlur = 14;
+            ctx.shadowBlur = this.sim.glowIntensity * 14 * styleGlow;
             ctx.stroke();
 
             // Inner crisp white neon accent
             ctx.beginPath();
             ctx.arc(this.sim.center.x, this.sim.center.y, ring.radius, start, end);
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = this.sim.visualStyle === 'minimal' ? color : '#ffffff';
+            ctx.lineWidth = this.sim.visualStyle === 'minimal' ? 1.2 : 1.8;
             ctx.shadowBlur = 0;
             ctx.stroke();
 

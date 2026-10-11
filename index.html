@@ -84,19 +84,12 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 gap-2" id="modeButtons">
-                    <button data-mode="classic" class="mode-btn w-full px-3 py-2 rounded-xl border border-emerald-500/60 bg-emerald-500/10 text-white font-medium hover:bg-emerald-500/20 transition flex items-center justify-between text-xs">
+                    <button data-mode="classic" class="mode-btn w-full px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-900/50 text-white font-medium hover:bg-zinc-800 transition flex items-center justify-between text-xs">
                         <span class="flex items-center gap-2">
                             <i class="fa-solid fa-circle-notch text-emerald-400 text-sm"></i>
-                            <span class="font-semibold">Classic Escape</span>
+                            <span class="font-semibold">Escape</span>
                         </span>
                         <span class="text-[10px] text-emerald-400 font-mono font-semibold">Actif</span>
-                    </button>
-                    <button data-mode="freezeCircle" class="mode-btn w-full px-3 py-2 rounded-xl border border-cyan-500/60 bg-cyan-500/10 text-white font-medium hover:bg-cyan-500/20 transition flex items-center justify-between text-xs opacity-50">
-                        <span class="flex items-center gap-2">
-                            <i class="fa-solid fa-circle-dot text-cyan-400 text-sm"></i>
-                            <span class="font-semibold">Freeze Circle (5 s)</span>
-                        </span>
-                        <span class="text-[10px] text-cyan-400 font-mono font-semibold">Choisir</span>
                     </button>
                     <button data-mode="accumulation" class="mode-btn w-full px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-900/50 text-white font-medium hover:bg-zinc-800 transition flex items-center justify-between text-xs opacity-50"><span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-sm" style="color:#f97316"></i><span class="font-semibold">Accumulation</span></span><span class="text-[10px] text-zinc-400 font-mono">Choisir</span></button>
                     <button data-mode="multiply" class="mode-btn w-full px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-900/50 text-white font-medium hover:bg-zinc-800 transition flex items-center justify-between text-xs opacity-50"><span class="flex items-center gap-2"><i class="fa-solid fa-clone text-sm" style="color:#f43f5e"></i><span class="font-semibold">Multiply</span></span><span class="text-[10px] text-zinc-400 font-mono">Choisir</span></button>
@@ -204,53 +197,6 @@
                 </div>
             </div>
 
-            <!-- Mode Settings Accordion (Freeze Circle) -->
-            <div id="freezeCircleSettingsBox" class="hidden rounded-2xl bg-zinc-900/60 border border-cyan-500/30 overflow-hidden">
-                <button type="button" class="accordion-toggle w-full p-3 flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider hover:bg-zinc-800/40 transition" data-target="freezeCircleSettings">
-                    <span class="flex items-center gap-2 text-cyan-400"><i class="fa-solid fa-sliders"></i> Réglages Mode : Freeze Circle</span>
-                    <i class="fa-solid fa-chevron-down text-zinc-400 transition-transform duration-200"></i>
-                </button>
-                <div id="freezeCircleSettings" class="accordion-content open px-3 pb-3 space-y-2.5 pt-1">
-                    <div>
-                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="freezeGapSizeSlider">Taille de l'ouverture</label>
-                            <span id="freezeGapSizeVal" class="text-cyan-400 font-mono font-semibold">42°</span>
-                        </div>
-                        <input id="freezeGapSizeSlider" type="range" min="8" max="120" step="1" value="42" class="w-full" aria-label="Taille de l'ouverture en degrés">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="freezeGapAngleSlider">Position de l'ouverture</label>
-                            <span id="freezeGapAngleVal" class="text-cyan-400 font-mono font-semibold">-90°</span>
-                        </div>
-                        <input id="freezeGapAngleSlider" type="range" min="-180" max="180" step="1" value="-90" class="w-full" aria-label="Position angulaire de l'ouverture">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                                <label for="freezePosXSlider">Cercle X</label>
-                                <span id="freezePosXVal" class="text-cyan-400 font-mono font-semibold">0%</span>
-                            </div>
-                            <input id="freezePosXSlider" type="range" min="-35" max="35" step="1" value="0" class="w-full" aria-label="Position horizontale du cercle">
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                                <label for="freezePosYSlider">Cercle Y</label>
-                                <span id="freezePosYVal" class="text-cyan-400 font-mono font-semibold">0%</span>
-                            </div>
-                            <input id="freezePosYSlider" type="range" min="-35" max="35" step="1" value="0" class="w-full" aria-label="Position verticale du cercle">
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="freezeSpeedSlider">Vitesse des balles</label>
-                            <span id="freezeSpeedVal" class="text-cyan-400 font-mono font-semibold">5.2</span>
-                        </div>
-                        <input id="freezeSpeedSlider" type="range" min="2" max="12" step="0.1" value="5.2" class="w-full" aria-label="Vitesse des balles">
-                    </div>
-                    <p class="text-[10px] text-zinc-500 leading-relaxed">Chaque balle garde la même direction initiale. Elle rebondit pendant 5 secondes, se fige et devient un morceau de paroi. La partie s'arrête dès qu'une balle sort par l'ouverture.</p>
-                </div>
-            </div>
 
             <!-- Options propres aux modes arcade -->
             <div class="rounded-2xl bg-zinc-900/60 border border-orange-500/30 overflow-hidden">
@@ -367,7 +313,7 @@
                         <input id="autoOptimizeSeedToggle" type="checkbox" class="mt-0.5 accent-cyan-400">
                         <span class="flex-1">
                             <span class="block text-xs font-semibold text-cyan-200">Optimiser automatiquement les options</span>
-                            <span class="block text-[10px] leading-relaxed text-zinc-400 mt-0.5">Teste plusieurs configurations avec la seed. Disponible pour Classic Escape pour le moment.</span>
+                            <span class="block text-[10px] leading-relaxed text-zinc-400 mt-0.5">Teste plusieurs configurations avec la seed. Disponible pour Escape pour le moment.</span>
                         </span>
                     </label>
 
@@ -630,7 +576,6 @@
     <script src="js/effects.js"></script>
     <script src="js/ball.js"></script>
     <script src="js/modes/classic.js"></script>
-    <script src="js/modes/freezeCircle.js"></script>
     <script src="js/modes/extraModes.js"></script>
     <script src="js/seedSearcher.js"></script>
     <script src="js/simulation.js"></script>

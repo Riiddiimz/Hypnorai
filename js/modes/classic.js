@@ -1,12 +1,12 @@
 /* ==========================================================================
-   Classic Escape Mode - Concentric Rotating Rings & Spikes
+   Escape Mode - Concentric Rotating Rings & Spikes
    ========================================================================== */
 
 class ClassicMode {
     constructor(sim) {
         this.sim = sim;
         this.id = 'classic';
-        this.name = 'Classic Escape';
+        this.name = 'Escape';
 
         // Rings Configuration
         this.rings = [];

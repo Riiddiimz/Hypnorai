@@ -347,6 +347,10 @@ class Simulation {
         if (this.activeMode && this.activeMode.render) {
             this.activeMode.render(this.ctx);
         }
+        // Escape draws its ring palette directly; apply the shared palette to its balls and effects.
+        if (this.activeModeId === 'classic') {
+            this.ctx.filter = `hue-rotate(${paletteHueShift[this.paletteName] ?? 0}deg)`;
+        }
 
         // Render Shockwaves & Particles
         this.shockwaves.forEach(sw => sw.draw(this.ctx));

@@ -378,8 +378,45 @@ window.addEventListener('DOMContentLoaded', () => {
     const copySeedBtn = document.getElementById('copySeedBtn');
     const playBestSeedBtn = document.getElementById('playBestSeedBtn');
     
+    function applyAccumulationSettings(settings) {
+        if (!settings || sim.activeModeId !== 'accumulation') return;
+        const mode = sim.activeMode;
+        Object.assign(mode, {
+            gapSizeDeg: settings.gapSizeDeg ?? mode.gapSizeDeg,
+            gapAngleDeg: settings.gapAngleDeg ?? mode.gapAngleDeg,
+            freezeInterval: settings.freezeInterval ?? mode.freezeInterval,
+            ballSpeed: settings.ballSpeed ?? mode.ballSpeed
+        });
+        if (settings.gravity != null) sim.gravity = settings.gravity;
+        if (settings.bounciness != null) sim.bounciness = settings.bounciness;
+        const controls = [
+            ['accGapSize', mode.gapSizeDeg], ['accGapAngle', mode.gapAngleDeg],
+            ['accFreeze', mode.freezeInterval], ['accSpeed', mode.ballSpeed],
+            ['gravitySlider', sim.gravity], ['bounceSlider', sim.bounciness]
+        ];
+        controls.forEach(([id, value]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = value;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+        Object.assign(mode, {
+            gapSizeDeg: settings.gapSizeDeg ?? mode.gapSizeDeg,
+            gapAngleDeg: settings.gapAngleDeg ?? mode.gapAngleDeg,
+            freezeInterval: settings.freezeInterval ?? mode.freezeInterval,
+            ballSpeed: settings.ballSpeed ?? mode.ballSpeed
+        });
+        sim.gravity = settings.gravity ?? sim.gravity;
+        sim.bounciness = settings.bounciness ?? sim.bounciness;
+        sim.initMode();
+    }
+
     function applySeedCandidate(seed, settings = null, optimized = false) {
         if (!Number.isFinite(Number(seed))) return;
+        if (settings && optimized && sim.activeModeId === 'accumulation') {
+            applyAccumulationSettings(settings);
+        }
         if (settings && optimized && sim.activeModeId === 'classic') {
             const m = sim.activeMode;
             Object.assign(m, settings);

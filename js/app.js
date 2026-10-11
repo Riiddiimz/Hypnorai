@@ -691,7 +691,9 @@ window.addEventListener('DOMContentLoaded', () => {
         multiply:['initialBalls','spawnPerBounce','maxBalls','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
     };
+    let skipPreferenceSave = false;
     const savePreferences = () => {
+        if (skipPreferenceSave) return;
         try {
             const controls = {};
             preferenceIds.forEach(id => { const el=document.getElementById(id); if(el) controls[id]=el.type==='checkbox'?el.checked:el.value; });
@@ -746,8 +748,9 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('beforeunload',savePreferences);
     const clearPreferencesBtn=document.getElementById('clearPreferencesBtn');
     if(clearPreferencesBtn)clearPreferencesBtn.addEventListener('click',()=>{
+        skipPreferenceSave = true;
         try{localStorage.removeItem(PREFS_KEY);}catch(_){}
-        const status=document.getElementById('preferencesStatus');if(status)status.textContent='Préférences effacées — recharge la page pour retrouver les réglages d’origine.';
+        window.location.reload();
     });
     loadPreferences();
 

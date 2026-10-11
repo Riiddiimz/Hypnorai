@@ -151,32 +151,6 @@
                         <input id="classicGapSlider" type="range" min="0.25" max="0.85" step="0.05" value="0.45" class="w-full" aria-label="Taille de la brèche">
                     </div>
 
-                    <!-- Palette -->
-                    <div>
-                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
-                            <label for="classicPaletteSelect">Palette de couleurs</label>
-                            <span id="classicPalettePreview" class="text-emerald-400 font-mono text-xs">Neon Glow</span>
-                        </div>
-                        <select id="classicPaletteSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                            <option value="neon">Neon Glow</option>
-                            <option value="cyberpunk">Cyberpunk Pink/Cyan</option>
-                            <option value="ocean">Deep Ocean</option>
-                            <option value="sunset">Golden Sunset</option>
-                            <option value="candy">Cotton Candy</option>
-                            <option value="fire">Fire & Lava</option>
-                            <option value="rainbow">Chroma Rainbow</option>
-                        </select>
-                    </div>
-
-                    <!-- Multi-Color Toggle -->
-                    <label class="relative flex items-center justify-between cursor-pointer py-1 px-1 rounded-lg hover:bg-zinc-800/30 transition select-none">
-                        <span class="text-xs text-zinc-300">Mode multi-couleur</span>
-                        <div class="relative inline-flex items-center">
-                            <input type="checkbox" id="classicMultiColorToggle" checked class="sr-only peer">
-                            <div class="w-8 h-4.5 bg-zinc-800 peer-focus:ring-2 peer-focus:ring-cyan-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 relative"></div>
-                        </div>
-                    </label>
-                    
                     <!-- Spikes Toggle -->
                     <label class="relative flex items-center justify-between cursor-pointer py-1 px-1 rounded-lg hover:bg-zinc-800/30 transition select-none">
                         <span class="text-xs text-zinc-300">Pics d'obstacles (Spikes)</span>
@@ -520,6 +494,56 @@
                     <i class="fa-solid fa-chevron-down text-zinc-400 transition-transform duration-200"></i>
                 </button>
                 <div id="visualSettings" class="accordion-content open px-3 pb-3 space-y-2 pt-1">
+                    <div class="rounded-xl border border-fuchsia-500/20 bg-zinc-950/60 p-2.5 space-y-2.5">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-fuchsia-300"><i class="fa-solid fa-palette mr-1"></i> Style & couleurs</div>
+                        <div>
+                            <label for="visualStyleSelect" class="text-[11px] text-zinc-400 block mb-1">Rendu visuel</label>
+                            <select id="visualStyleSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500">
+                                <option value="neon">Néon intense</option>
+                                <option value="soft">Lueur douce</option>
+                                <option value="minimal">Minimal / net</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="backgroundToneSelect" class="text-[11px] text-zinc-400 block mb-1">Fond du jeu</label>
+                            <select id="backgroundToneSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500">
+                                <option value="midnight">Noir spatial</option>
+                                <option value="blue">Bleu profond</option>
+                                <option value="black">Noir pur</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-zinc-400 mb-1"><label for="glowIntensitySlider">Intensité de la lueur</label><span id="glowIntensityValue" class="text-fuchsia-300 font-mono">100%</span></div>
+                            <input id="glowIntensitySlider" type="range" min="0" max="2" step="0.1" value="1" class="w-full" aria-label="Intensité de la lueur">
+                        </div>
+                    </div>
+                    <!-- Palette -->
+                    <div>
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <label for="classicPaletteSelect">Palette de couleurs</label>
+                            <span id="classicPalettePreview" class="text-emerald-400 font-mono text-xs">Neon Glow</span>
+                        </div>
+                        <select id="classicPaletteSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            <option value="neon">Neon Glow</option>
+                            <option value="cyberpunk">Cyberpunk Pink/Cyan</option>
+                            <option value="ocean">Deep Ocean</option>
+                            <option value="sunset">Golden Sunset</option>
+                            <option value="candy">Cotton Candy</option>
+                            <option value="fire">Fire & Lava</option>
+                            <option value="rainbow">Chroma Rainbow</option>
+                        </select>
+                    </div>
+
+                    <!-- Multi-Color Toggle -->
+                    <label class="relative flex items-center justify-between cursor-pointer py-1 px-1 rounded-lg hover:bg-zinc-800/30 transition select-none">
+                        <span class="text-xs text-zinc-300">Mode multi-couleur</span>
+                        <div class="relative inline-flex items-center">
+                            <input type="checkbox" id="classicMultiColorToggle" checked class="sr-only peer">
+                            <div class="w-8 h-4.5 bg-zinc-800 peer-focus:ring-2 peer-focus:ring-cyan-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 relative"></div>
+                        </div>
+                    </label>
+                    
+
                     
                     <label class="relative flex items-center justify-between cursor-pointer py-1 px-1 rounded-lg hover:bg-zinc-800/30 transition select-none">
                         <span class="text-xs text-zinc-300">Traînée lumineuse (Trail)</span>

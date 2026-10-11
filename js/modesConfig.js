@@ -93,7 +93,7 @@ const MODES_CONFIG = {
     multiply: {
         id: 'multiply', name: 'Multiply', badge: 'Nouveau', description: 'Les contacts entre boules génèrent des balles supplémentaires.', icon: 'fa-clone', color: '#f43f5e',
         ballPhysics: { gravity: 0.18, bounciness: 1, ballRadius: 8, speedBoost: 1, maxSpeed: 26 },
-        modeSettings: {"initialBalls":2,"spawnPerBounce":1,"maxBalls":10000,"radiusScale":1,"ballSpeed":5}
+        modeSettings: {"initialBalls":2,"spawnPerBounce":1,"maxBalls":10,"radiusScale":1,"ballSpeed":5}
     },
     battleLines: {
         id: 'battleLines', name: 'Battle Lines', badge: 'Nouveau', description: 'Six boules sans gravité : les lignes disparaissent au contact et les rebords en rendent trois.', icon: 'fa-grip-lines', color: '#a78bfa',

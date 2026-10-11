@@ -172,6 +172,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ['mulInitial','initialBalls','mulInitialVal',v=>v],
         ['mulSpawn','spawnPerBounce','mulSpawnVal',v=>v],
         ['mulDiameter','radiusScale','mulDiameterVal',v=>v+'%'],
+        ['mulMax','maxBalls','mulMaxVal',v=>v],
         ['mulSpeed','ballSpeed','mulSpeedVal',v=>v],
         ['battleCount','ballCount','battleCountVal',v=>v],
         ['battleLines','startingLines','battleLinesVal',v=>v],
@@ -191,7 +192,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const mode=sim.activeMode;if(!mode)return;
             mode[prop]=Number(el.value);
             const label=document.getElementById(labelId);if(label)label.textContent=format(el.value);
-            if(['mulInitial','mulSpawn','mulDiameter','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','accFreeze','accSpeed'].includes(id))sim.initMode();
+            if(['mulInitial','mulSpawn','mulDiameter','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','accFreeze','accSpeed'].includes(id))sim.initMode();
         });
     });
     document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(syncArcadeModePanel,0)));
@@ -719,11 +720,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Persistance locale des réglages utilisateur
     const PREFS_KEY = 'hypnorai.preferences.v1';
-    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulDiameter','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
+    const preferenceIds = ['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider','visualStyleSelect','backgroundToneSelect','glowIntensitySlider','accGapSize','accGapAngle','accFreeze','accSpeed','mulInitial','mulSpawn','mulDiameter','mulMax','mulSpeed','battleCount','battleLines','battleGain','battleSpeed','battleSpread','gravitySlider','bounceSlider','radiusSlider','speedBoostSlider','instSelect','scaleSelect','volumeSlider','trailToggle','particlesToggle','shockwavesToggle','shakeToggle','portraitToggle','customDurationSlider','manualSeedInput','autoOptimizeSeedToggle'];
     const modePreferenceProps = {
         classic:['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount'],
         accumulation:['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
-        multiply:['initialBalls','spawnPerBounce','radiusScale','ballSpeed'],
+        multiply:['initialBalls','spawnPerBounce','radiusScale','maxBalls','ballSpeed'],
         battleLines:['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
     };
 
@@ -741,7 +742,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const modeSettingKeys = {
             classic: ['ringCount','rotationMultiplier','rotationDirection','gapSize','paletteName','multiColor','spikesEnabled','spikeCount','spikeLength','spikeWidth'],
             accumulation: ['gapSizeDeg','gapAngleDeg','freezeInterval','ballSpeed'],
-            multiply: ['initialBalls','spawnPerBounce','radiusScale','ballSpeed'],
+            multiply: ['initialBalls','spawnPerBounce','radiusScale','maxBalls','ballSpeed'],
             battleLines: ['ballCount','startingLines','wallLineGain','battleSpeed','lineSpreadDeg']
         };
         const modeSettings = {};
@@ -965,7 +966,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(data.seed)sim.seed=parseInt(data.seed,10)||sim.seed;
             const wanted=sim.modes[data.activeModeId]?data.activeModeId:'classic';
             selectMode(wanted);
-            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulDiameter','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
+            const ids={classic:['classicRingsSlider','classicRotationSlider','classicDirSelect','classicGapSlider','classicPaletteSelect','classicMultiColorToggle','classicSpikeToggle','classicSpikeCountSlider'],accumulation:['accGapSize','accGapAngle','accFreeze','accSpeed'],multiply:['mulInitial','mulSpawn','mulDiameter','mulMax','mulSpeed'],battleLines:['battleCount','battleLines','battleGain','battleSpeed','battleSpread']}[wanted]||[];
             ids.forEach(id=>{const el=document.getElementById(id);if(el)el.dispatchEvent(new Event(el.type==='checkbox'||el.tagName==='SELECT'?'change':'input',{bubbles:true}));});
             Object.entries(data.physics||{}).forEach(([p,v])=>{if(Number.isFinite(v)&&p in sim)sim[p]=v;});
             syncPhysicsUI();

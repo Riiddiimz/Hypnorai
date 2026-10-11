@@ -115,17 +115,17 @@ const MODES_CONFIG = {
     accumulation: {
         id: 'accumulation', name: 'Accumulation', badge: 'Nouveau', description: 'Chaque balle dispose de cinq secondes avant de se figer et devenir un obstacle.', icon: 'fa-layer-group', color: '#f97316',
         ballPhysics: { gravity: 0.24, bounciness: 1.02, ballRadius: 13, speedBoost: 1.01, maxSpeed: 32 },
-        modeSettings: {"freezeInterval":5}
+        modeSettings: {"freezeInterval":5,"gapSizeDeg":42,"gapAngleDeg":30,"ballSpeed":5.4}
     },
     multiply: {
         id: 'multiply', name: 'Multiply', badge: 'Nouveau', description: 'Chaque rebond sur la paroi génère des balles supplémentaires.', icon: 'fa-clone', color: '#f43f5e',
         ballPhysics: { gravity: 0.18, bounciness: 1, ballRadius: 8, speedBoost: 1, maxSpeed: 26 },
-        modeSettings: {"spawnPerBounce":2,"maxBalls":70}
+        modeSettings: {"initialBalls":2,"spawnPerBounce":1,"maxBalls":40,"ballSpeed":5}
     },
     battleLines: {
         id: 'battleLines', name: 'Battle Lines', badge: 'Nouveau', description: 'Six boules sans gravité : les lignes disparaissent au contact et les rebords en rendent trois.', icon: 'fa-grip-lines', color: '#a78bfa',
         ballPhysics: { gravity: 0, bounciness: 1, ballRadius: 9, speedBoost: 1, maxSpeed: 22 },
-        modeSettings: {"ballCount":6,"startingLines":5,"wallLineGain":3}
+        modeSettings: {"ballCount":6,"startingLines":5,"wallLineGain":3,"battleSpeed":4,"lineSpreadDeg":7}
     },
     lines: {
         id: 'lines', name: 'Lines', badge: 'Nouveau', description: 'Chaque point de rebond est relié au centre pour créer un dessin géométrique.', icon: 'fa-bezier-curve', color: '#22d3ee',

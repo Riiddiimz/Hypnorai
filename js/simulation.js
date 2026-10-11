@@ -194,7 +194,8 @@ class Simulation {
     }
 
     spawnBall(x, y, vx, vy, hue) {
-        if (this.activeModeId === "multiply" && this.balls.length >= this.activeMode.maxBalls) return;
+        // Hard safety cap prevents accidental runaway growth from freezing the browser.
+        if (this.activeModeId === "multiply" && this.balls.length >= Math.min(1200, Math.max(1, this.activeMode.maxBalls || 10))) return;
         if (this.activeModeId !== "multiply" && this.balls.length >= 80) return;
         vx = vx ?? ((this.prng.random() - 0.5) * 7);
         vy = vy ?? ((this.prng.random() - 0.5) * 5);
@@ -310,8 +311,14 @@ class Simulation {
         }
 
         // Record trails once per full frame
-        for (const ball of this.balls) {
-            ball.recordTrail();
+        // Trail history is expensive when the scene contains hundreds of balls.
+        if (this.balls.length <= 250) {
+            for (const ball of this.balls) ball.recordTrail();
+        } else {
+            for (const ball of this.balls) {
+                ball.trail.length = 0;
+                ball.hue = (ball.hue + 0.4) % 360;
+            }
         }
 
         this.updateStatsUI();
@@ -369,7 +376,11 @@ class Simulation {
         this.particles.forEach(p => p.draw(this.ctx));
 
         // Render Balls
-        this.balls.forEach(ball => ball.draw(this.ctx, this.enableTrail, { visualStyle: this.visualStyle, glowIntensity: this.glowIntensity }));
+        const crowded = this.balls.length > 250;
+        this.balls.forEach(ball => ball.draw(this.ctx, crowded ? false : this.enableTrail, {
+            visualStyle: crowded ? 'minimal' : this.visualStyle,
+            glowIntensity: crowded ? 0 : this.glowIntensity
+        }));
         this.ctx.filter = 'none';
 
         this.ctx.restore();

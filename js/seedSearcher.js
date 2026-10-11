@@ -104,7 +104,7 @@ class SeedSearcher {
                 const ringIndex = rings.findIndex(r => r.active);
                 if (ringIndex === -1) {
                     // All rings cleared!
-                    const elapsedSec = frame / 60;
+                    const elapsedSec = (frame + 1) / 60;
                     return elapsedSec;
                 }
 
@@ -125,7 +125,7 @@ class SeedSearcher {
                         ring.active = false;
                         clearedCount++;
                         if (clearedCount >= count) {
-                            return frame / 60;
+                            return (frame + 1) / 60;
                         }
                     } else {
                         // Rebound

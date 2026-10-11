@@ -25,127 +25,115 @@ class SeedSearcher {
         this.onFound = null;
     }
 
-    // Fast Headless simulation of a single seed
+    // Deterministic Classic evaluator mirroring Simulation.update + ClassicMode.handleCollision.
+    // Return the elapsed simulation time at the same victory condition as the live game.
     evaluateSeed(seed, maxDuration = 120, settings = null) {
         const mode = this.sim.activeMode;
         if (mode.evaluateSeed) return mode.evaluateSeed(seed, maxDuration, this.prng, settings);
-        // The built-in fast evaluator below models Classic Escape only.
         if (mode.id && mode.id !== 'classic') return null;
+
         this.prng.setSeed(seed);
         const count = settings?.ringCount ?? mode.ringCount ?? 6;
         const maxRadius = Math.max(30, this.sim.boundaryRadius - 6);
         const innerRadius = Math.max(22, Math.min(65, this.sim.boundaryRadius * 0.24));
         const spacing = count > 1 ? (maxRadius - innerRadius) / (count - 1) : 0;
         const gapSize = settings?.gapSize ?? mode.gapSize;
-        const rotMultiplier = settings?.rotationMultiplier ?? mode.rotationMultiplier;
-        const rotDir = settings?.rotationDirection ?? mode.rotationDirection;
+        const rotationMultiplier = settings?.rotationMultiplier ?? mode.rotationMultiplier;
+        const rotationDirection = settings?.rotationDirection ?? mode.rotationDirection;
+        const gravity = settings?.gravity ?? this.sim.gravity;
+        const bounciness = settings?.bounciness ?? this.sim.bounciness;
+        const speedBoost = settings?.speedBoost ?? this.sim.speedBoost;
+        const maxSpeed = this.sim.maxSpeed;
+        const ballRadius = this.sim.ballRadius;
 
-        // Rings setup
         const rings = [];
         for (let i = 0; i < count; i++) {
-            let speedSign = 1;
-            if (rotDir === 'alternate') {
-                speedSign = (i % 2 === 0 ? 1 : -1);
-            } else if (rotDir === 'counter') {
-                speedSign = -1;
-            }
-
+            const sign = rotationDirection === 'alternate'
+                ? (i % 2 === 0 ? 1 : -1)
+                : rotationDirection === 'counter' ? -1 : 1;
             rings.push({
                 radius: Math.min(maxRadius, innerRadius + i * spacing),
-                gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.65),
-                rotationSpeed: speedSign * (0.22 + i * 0.04),
+                gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + i * 0.65,
+                gapSize,
+                rotationSpeed: sign * (0.22 + i * 0.04),
                 active: true
             });
         }
 
-        // Initial Ball setup
-        const spawnOffset = rings[0].radius * 0.35;
+        const spawnOffset = rings.length ? rings[0].radius * 0.35 : 10;
+        // Live Simulation.initMode consumes three PRNG values: vx, vy, then hue.
         let ball = {
             x: this.sim.center.x,
             y: this.sim.center.y - spawnOffset,
             vx: (this.prng.random() - 0.5) * 6,
             vy: (this.prng.random() - 0.5) * 4,
-            radius: this.sim.ballRadius
+            radius: ballRadius
         };
+        this.prng.random(); // hue draw, irrelevant to physics but part of the live initialization sequence
 
-        const gravity = settings?.gravity ?? this.sim.gravity;
-        const bounciness = settings?.bounciness ?? this.sim.bounciness;
-        const speedBoost = settings?.speedBoost ?? this.sim.speedBoost;
-        const maxSpeed = this.sim.maxSpeed;
-
-        const dtScale = 1.0;
-        const substeps = 8;
-        const subDt = dtScale / substeps;
         const maxFrames = Math.floor(maxDuration * 60);
-
-        let clearedCount = 0;
+        const substeps = 8;
+        const subDt = 1 / substeps;
+        const victoryRadius = this.sim.boundaryRadius + ball.radius * 2;
 
         for (let frame = 0; frame < maxFrames; frame++) {
-            // Rotate rings
-            for (let i = 0; i < count; i++) {
-                if (rings[i].active) {
-                    rings[i].gapAngle = (rings[i].gapAngle + rings[i].rotationSpeed * rotMultiplier * dtScale) % (Math.PI * 2);
+            // Same update order: rotate rings, then run 8 physics substeps.
+            for (const ring of rings) {
+                if (ring.active) {
+                    ring.gapAngle = (ring.gapAngle + ring.rotationSpeed * rotationMultiplier) % (Math.PI * 2);
                 }
             }
 
-            // Substep physics
             for (let step = 0; step < substeps; step++) {
                 ball.vy += gravity * subDt;
                 ball.x += ball.vx * subDt;
                 ball.y += ball.vy * subDt;
 
-                const curSpeed = Math.hypot(ball.vx, ball.vy);
-                if (curSpeed > maxSpeed) {
-                    ball.vx = (ball.vx / curSpeed) * maxSpeed;
-                    ball.vy = (ball.vy / curSpeed) * maxSpeed;
+                const speed = Math.hypot(ball.vx, ball.vy);
+                if (speed > maxSpeed) {
+                    ball.vx = ball.vx / speed * maxSpeed;
+                    ball.vy = ball.vy / speed * maxSpeed;
                 }
 
-                // Check collision with innermost active ring
-                const ringIndex = rings.findIndex(r => r.active);
-                if (ringIndex === -1) {
-                    // All rings cleared!
-                    const elapsedSec = (frame + 1) / 60;
-                    return elapsedSec;
-                }
-
-                const ring = rings[ringIndex];
                 const dx = ball.x - this.sim.center.x;
                 const dy = ball.y - this.sim.center.y;
                 const dist = Math.hypot(dx, dy);
-                const radialVel = (ball.vx * dx + ball.vy * dy) / Math.max(dist, 0.001);
-                const distDiff = dist - (ring.radius - ball.radius);
+                const ringIndex = rings.findIndex(r => r.active);
 
-                if (distDiff >= 0 && radialVel > 0) {
-                    let ballAngle = Math.atan2(dy, dx);
-                    let relAngle = (ballAngle - ring.gapAngle) % (Math.PI * 2);
-                    relAngle = Math.atan2(Math.sin(relAngle), Math.cos(relAngle));
+                // ClassicMode only wins after the ball travels beyond the outer boundary
+                // once every ring has been cleared (not at the moment the last ring clears).
+                if (ringIndex === -1) {
+                    if (dist > victoryRadius) return (frame + 1) / 60;
+                    continue;
+                }
 
-                    if (Math.abs(relAngle) <= gapSize / 2) {
-                        // Cleared ring
+                const ring = rings[ringIndex];
+                const radialVelocity = (ball.vx * dx + ball.vy * dy) / Math.max(dist, 0.001);
+                if (dist - (ring.radius - ball.radius) >= 0 && radialVelocity > 0) {
+                    const angle = Math.atan2(dy, dx);
+                    const relAngle = Math.atan2(
+                        Math.sin(angle - ring.gapAngle),
+                        Math.cos(angle - ring.gapAngle)
+                    );
+
+                    if (Math.abs(relAngle) <= ring.gapSize / 2) {
                         ring.active = false;
-                        clearedCount++;
-                        if (clearedCount >= count) {
-                            return (frame + 1) / 60;
-                        }
                     } else {
-                        // Rebound
                         const nx = dx / Math.max(dist, 0.001);
                         const ny = dy / Math.max(dist, 0.001);
                         ball.x = this.sim.center.x + nx * (ring.radius - ball.radius);
                         ball.y = this.sim.center.y + ny * (ring.radius - ball.radius);
-
                         const dot = ball.vx * nx + ball.vy * ny;
                         if (dot > 0) {
-                            const bounceMult = bounciness * speedBoost;
-                            ball.vx = (ball.vx - 2 * dot * nx) * bounceMult;
-                            ball.vy = (ball.vy - 2 * dot * ny) * bounceMult;
+                            const bounceMultiplier = bounciness * speedBoost;
+                            ball.vx = (ball.vx - 2 * dot * nx) * bounceMultiplier;
+                            ball.vy = (ball.vy - 2 * dot * ny) * bounceMultiplier;
                         }
                     }
                 }
             }
         }
-
-        return maxDuration; // Did not finish within limit
+        return maxDuration;
     }
 
     startSearch(targetDuration, onProgress, onFound, options = {}) {

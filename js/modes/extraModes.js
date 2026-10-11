@@ -23,7 +23,38 @@ if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,
 }
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx=(b.vx-2*dot*nx)*this.sim.bounciness;b.vy=(b.vy-2*dot*ny)*this.sim.bounciness;this.sim.totalBounces++}}}
 }}
-updateMultiply(dt){for(const b of [...this.sim.balls]){if(this.sim.balls.length>=this.maxBalls)break;b.vy+=this.sim.gravity*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);if(d>=this.radius-b.radius){this.bounce(b,dx,dy,d);for(let j=0;j<this.spawnPerBounce&&this.sim.balls.length<this.maxBalls;j++){let a=Math.atan2(b.vy,b.vx)+(j%2?-.65:.65);this.sim.spawnBall(b.x,b.y,Math.cos(a)*this.ballSpeed,Math.sin(a)*this.ballSpeed,(b.hue+j*55)%360);}}}this.sim.balls=this.sim.balls.slice(0,this.maxBalls)}
+updateMultiply(dt){
+  const balls=this.sim.balls;
+  // Movement and rebounds on the circle never create balls.
+  for(const b of [...balls]){
+   b.vy+=this.sim.gravity*dt;
+   b.x+=b.vx*dt;b.y+=b.vy*dt;
+   const dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);
+   if(d>=this.radius-b.radius)this.bounce(b,dx,dy,d);
+  }
+  // Multiply only when two balls physically collide.
+  for(let i=0;i<balls.length&&balls.length<this.maxBalls;i++){
+   for(let j=i+1;j<balls.length&&balls.length<this.maxBalls;j++){
+    const a=balls[i],b=balls[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.radius+b.radius;
+    if(d<=0||d>=min)continue;
+    const nx=dx/d,ny=dy/d;
+    const closing=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
+    // Separate overlapping balls so a single contact cannot trigger repeatedly.
+    const overlap=min-d;
+    a.x-=nx*overlap/2;a.y-=ny*overlap/2;
+    b.x+=nx*overlap/2;b.y+=ny*overlap/2;
+    if(closing<=0)continue;
+    a.vx-=closing*nx;a.vy-=closing*ny;
+    b.vx+=closing*nx;b.vy+=closing*ny;
+    for(let k=0;k<this.spawnPerBounce&&balls.length<this.maxBalls;k++){
+     const angle=Math.atan2((a.vy+b.vy)/2,(a.vx+b.vx)/2)+(k%2===0?Math.PI/2:-Math.PI/2);
+     const hue=(a.hue+(k+1)*55)%360;
+     this.sim.spawnBall((a.x+b.x)/2+Math.cos(angle)*(min+2),(a.y+b.y)/2+Math.sin(angle)*(min+2),Math.cos(angle)*this.ballSpeed,Math.sin(angle)*this.ballSpeed,hue);
+    }
+   }
+  }
+  this.sim.balls=balls.slice(0,this.maxBalls);
+ }
 updateBattle(dt){
  const alive=this.battle.filter(b=>b.alive);
  for(const b of alive){

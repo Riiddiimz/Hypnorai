@@ -335,6 +335,14 @@ class Simulation {
             this.ctx.translate(shakeX, shakeY);
         }
 
+        // Zoom out visually in Multiply mode while keeping the physics world and ball sizes unchanged.
+        if (this.activeModeId === "multiply" && this.activeMode && this.activeMode.radius > this.boundaryRadius) {
+            const zoom = this.boundaryRadius / this.activeMode.radius;
+            this.ctx.translate(this.center.x, this.center.y);
+            this.ctx.scale(zoom, zoom);
+            this.ctx.translate(-this.center.x, -this.center.y);
+        }
+
         // Shared glow for modes that don't define their own shadow.
         const styleGlow = this.visualStyle === 'minimal' ? 0 : this.visualStyle === 'soft' ? 0.45 : 1;
         this.ctx.shadowBlur = this.glowIntensity * 8 * styleGlow;

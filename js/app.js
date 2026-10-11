@@ -410,7 +410,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     findSeedBtn.classList.remove('searching-active');
                     if (searchCountDisplay) searchCountDisplay.textContent = result.testedCount.toLocaleString();
                     if (bestCandidateDisplay) {
-                        bestCandidateDisplay.textContent = `✓ Trouvée: Seed #${result.seed} (${result.duration.toFixed(1)}s)`;
+                        bestCandidateDisplay.textContent = `✓ Trouvée: Seed #${result.seed} (${result.duration.toFixed(1)}s)${result.optimized ? ' · options optimisées' : ''}`;
                     }
 
                     // Apply the seed and the matching settings together.

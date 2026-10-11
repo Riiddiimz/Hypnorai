@@ -14,6 +14,8 @@ class ClassicMode {
         this.clearedCount = 0;
         this.rotationMultiplier = 0.12;
         this.rotationDirection = 'alternate'; // 'alternate' | 'clockwise' | 'counter'
+        this.initialGapMode = 'random'; // 'random' | 'offset' | 'alternate'
+        this.gapOffset = 0; // degrees between consecutive rings in offset mode
         this.gapSize = Math.PI * 0.45;
         this.paletteName = 'neon';
         this.multiColor = true;
@@ -61,9 +63,21 @@ class ClassicMode {
                     speedSign = -1;
                 }
 
+                let initialAngle;
+                if (this.initialGapMode === 'random') {
+                    // Use the simulation's seeded PRNG to preserve reproducibility.
+                    initialAngle = this.sim.prng.random() * Math.PI * 2;
+                } else if (this.initialGapMode === 'offset') {
+                    initialAngle = i * this.gapOffset * Math.PI / 180;
+                } else if (this.initialGapMode === 'alternate') {
+                    initialAngle = (i % 2) * Math.PI;
+                } else {
+                    initialAngle = this.sim.prng.random() * Math.PI * 2;
+                }
+
                 this.rings.push({
                     radius: 0,
-                    gapAngle: (i % 2 === 0 ? -Math.PI / 2 : Math.PI / 2) + (i * 0.65),
+                    gapAngle: initialAngle,
                     gapSize: this.gapSize,
                     rotationSpeed: speedSign * (0.22 + i * 0.04),
                     hue: this.getRingHue(i),

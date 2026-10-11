@@ -741,8 +741,8 @@ window.addEventListener('DOMContentLoaded', () => {
             sim.initMode(); syncArcadeModePanel();
         } catch(err) { console.warn('Restauration des préférences impossible.',err); }
     };
-    document.addEventListener('input',savePreferences,true);
-    document.addEventListener('change',savePreferences,true);
+    document.addEventListener('input',savePreferences);
+    document.addEventListener('change',savePreferences);
     window.addEventListener('beforeunload',savePreferences);
     const clearPreferencesBtn=document.getElementById('clearPreferencesBtn');
     if(clearPreferencesBtn)clearPreferencesBtn.addEventListener('click',()=>{

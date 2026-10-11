@@ -142,6 +142,23 @@
                         </select>
                     </div>
 
+                    <!-- Initial Gap Mode -->
+                    <div>
+                        <label for="classicGapModeSelect" class="text-[11px] text-zinc-400 block mb-1">Mode de départ des brèches</label>
+                        <select id="classicGapModeSelect" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                            <option value="random">Aléatoire (seed)</option>
+                            <option value="offset">Décalé (spirale)</option>
+                            <option value="alternate">Alterné (1 sur 2 opposé)</option>
+                        </select>
+                    </div>
+                    <div id="classicGapOffsetGroup" class="hidden">
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <label for="classicGapOffsetSlider">Décalage</label>
+                            <span id="classicGapOffsetValue" class="text-emerald-400 font-mono font-semibold">0°</span>
+                        </div>
+                        <input id="classicGapOffsetSlider" type="range" min="0" max="360" step="1" value="0" class="w-full" aria-label="Décalage angulaire entre brèches">
+                    </div>
+
                     <!-- Gap Size -->
                     <div>
                         <div class="flex justify-between text-xs text-zinc-400 mb-1">

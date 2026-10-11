@@ -23,7 +23,7 @@ if(this.id==="portal"){let p=this.portals.find(p=>p.alive&&Math.abs(this.diff(a,
 }
 for(let f of this.frozen){let x=b.x-f.x,y=b.y-f.y,d=Math.hypot(x,y);if(d<b.radius+f.r&&d>.001){let nx=x/d,ny=y/d;b.x=f.x+nx*(b.radius+f.r);b.y=f.y+ny*(b.radius+f.r);const dot=b.vx*nx+b.vy*ny;if(dot<0){b.vx=(b.vx-2*dot*nx)*this.sim.bounciness;b.vy=(b.vy-2*dot*ny)*this.sim.bounciness;this.sim.totalBounces++}}}
 }}
-updateMultiply(dt){for(const b of [...this.sim.balls]){if(this.sim.balls.length>=this.maxBalls)break;b.vy+=this.sim.gravity*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);if(d>=this.radius-b.radius){this.bounce(b,dx,dy,d);for(let j=0;j<this.spawnPerBounce&&this.sim.balls.length<this.maxBalls;j++){let a=Math.atan2(b.vy,b.vx)+(j%2?-.65:.65);this.sim.spawnBall(b.x,b.y,Math.cos(a)*5,Math.sin(a)*5,(b.hue+j*55)%360);}}}this.sim.balls=this.sim.balls.slice(0,this.maxBalls)}
+updateMultiply(dt){for(const b of [...this.sim.balls]){if(this.sim.balls.length>=this.maxBalls)break;b.vy+=this.sim.gravity*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;let dx=b.x-this.cx,dy=b.y-this.cy,d=Math.hypot(dx,dy);if(d>=this.radius-b.radius){this.bounce(b,dx,dy,d);for(let j=0;j<this.spawnPerBounce&&this.sim.balls.length<this.maxBalls;j++){let a=Math.atan2(b.vy,b.vx)+(j%2?-.65:.65);this.sim.spawnBall(b.x,b.y,Math.cos(a)*this.ballSpeed,Math.sin(a)*this.ballSpeed,(b.hue+j*55)%360);}}}this.sim.balls=this.sim.balls.slice(0,this.maxBalls)}
 updateBattle(dt){
  const alive=this.battle.filter(b=>b.alive);
  for(const b of alive){

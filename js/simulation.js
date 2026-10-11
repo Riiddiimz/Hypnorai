@@ -34,6 +34,8 @@ class Simulation {
         this.visualStyle = 'neon';
         this.backgroundTone = 'midnight';
         this.glowIntensity = 1;
+        this.paletteName = 'neon';
+        this.multiColor = true;
         this.screenShakeIntensity = 0;
 
         // Performance & Stats
@@ -335,6 +337,12 @@ class Simulation {
         this.ctx.shadowBlur = this.glowIntensity * 8 * styleGlow;
         this.ctx.shadowColor = this.activeMode && this.activeMode.color ? this.activeMode.color : '#22d3ee';
 
+        // Share the selected palette with every non-Escape mode and its effects/balls.
+        const paletteHueShift = { neon: 0, cyberpunk: 8, ocean: 145, sunset: -25, candy: -12, fire: -38, rainbow: 0 };
+        if (this.activeModeId !== 'classic') {
+            this.ctx.filter = `hue-rotate(${paletteHueShift[this.paletteName] ?? 0}deg)`;
+        }
+
         // Render active mode boundaries
         if (this.activeMode && this.activeMode.render) {
             this.activeMode.render(this.ctx);
@@ -346,6 +354,7 @@ class Simulation {
 
         // Render Balls
         this.balls.forEach(ball => ball.draw(this.ctx, this.enableTrail, { visualStyle: this.visualStyle, glowIntensity: this.glowIntensity }));
+        this.ctx.filter = 'none';
 
         this.ctx.restore();
     }

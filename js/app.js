@@ -833,6 +833,7 @@ window.addEventListener('DOMContentLoaded', () => {
             wrapper.className = 'flex items-stretch gap-1.5 min-w-0';
             modeButton.parentNode.insertBefore(wrapper, modeButton);
             wrapper.appendChild(modeButton);
+            modeButton.classList.remove('w-full');
             modeButton.classList.add('flex-1', 'min-w-0');
             const exportButton = document.createElement('button');
             exportButton.type = 'button';
@@ -925,6 +926,16 @@ window.addEventListener('DOMContentLoaded', () => {
             if (el.type === 'checkbox') el.checked = !!el.checked;
             el.dispatchEvent(new Event(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
         });
+        // Re-apply model values after UI events: some legacy controls target the active mode.
+        if (data.format === 'hypnorai-mode-config') {
+            applyPhysics(data.physics);
+            applyOneMode(data.modeId, data);
+            selectMode(data.modeId);
+        } else {
+            applyPhysics(data.physics);
+            Object.entries(data.modes || {}).forEach(([id, config]) => applyOneMode(id, config));
+            selectMode(sim.modes[data.activeModeId] ? data.activeModeId : sim.activeModeId);
+        }
         syncPhysicsUI();
         syncFreezeUI();
         sim.initMode();

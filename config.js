@@ -60,6 +60,12 @@ window.APP_CONFIG = {
             // Options : 'alternate' (sens alterné) | 'clockwise' (sens horaire) | 'counter' (anti-horaire)
             rotationDirection: 'alternate',
 
+            // Angle initial des brèches : 'random' | 'offset' | 'alternate'
+            initialGapMode: 'random',
+
+            // Décalage angulaire entre deux cercles consécutifs en degrés [0–360]
+            gapOffset: 0,
+
             // Taille de l'ouverture / brèche dans les cercles (en proportion de PI)
             // [Min: 0.25 (brèche étroite difficile) | Max: 0.85 (large facile) | Défaut: 0.45 (moyen)]
             gapSizeRatio: 0.45,
